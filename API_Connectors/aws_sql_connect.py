@@ -20,7 +20,7 @@ class AWS_SQL:
         )
         # connection.commit()
 
-        self.cursor = self.connection.cursor()
+        self.cursor = self.connection.cursor(buffered=True)
         # cursor.execute()
 
     def close(self):
