@@ -32,6 +32,7 @@ def insert_update_Kraken_rows():
 def insert_update_Binance_rows():
     #get the data to insert
     Binance_URIs = all_links_Binance()
+    insert_urls_to_db('binance', Binance_URIs)
     # inser into DummyData.binance_assets
     # insert into DummyData.assets
 
@@ -52,16 +53,19 @@ def insert_urls_to_db(exchange, dataSet):
     if exchange == 'kraken':
         # hold all new data 
         db_connection.cursor.execute("CREATE TABLE IF NOT EXISTS new_urls LIKE kraken_assets")
+        db_connection.connection.commit()
         db_connection.cursor.execute("DELETE FROM new_urls WHERE id")
+        db_connection.connection.commit()
         for id, data in enumerate(dataSet):
             vals = (id+1, data[0], data[2], data[3])
-            insertQuery = f'INSERT INTO new_urls VALUES (%s, %s, %s,%s)'
-            db_connection.cursor.execute(insertQuery, vals) 
-            if id > 10:
-                break
+            insertQuery = f"INSERT INTO new_urls(id, ticker, historical_data_url, live_data_url) VALUES ({vals[0]}, '{vals[1]}','{vals[2]}','{vals[3]}')"
+            db_connection.cursor.execute(insertQuery) 
+            db_connection.connection.commit()
+            # if not id  10:
+            #     break
         db_connection.connection.commit()
         db_connection.cursor.execute("SELECT * FROM new_urls;")
-        db_connection.connection.commit()
+        # db_connection.connection.commit()
         tmpTable = db_connection.cursor.fetchall()
     elif exchange == "binace": 
         # new tables have different 
@@ -74,8 +78,8 @@ def insert_urls_to_db(exchange, dataSet):
     # -------- temp data has been made by this point ----
     db_connection.cursor.execute(f"select * from {exchange}_assets RIGHT JOIN new_urls on {exchange}_assets.ticker = new_urls.ticker")
     db_connection.connection.commit()
-    deletedData = fetchall()
-    db_connection.cursor.execute(f"delete from {exchange}_assets where ... in {deletedData}")
+    # deletedData = fetchall()
+    # db_connection.cursor.execute(f"delete from {exchange}_assets where ... in {deletedData}")
 
 
 
