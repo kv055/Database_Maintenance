@@ -14,7 +14,7 @@ def all_pairs_Kraken():
 
 def all_links_Kraken():
     pairs = all_pairs_Kraken()
-    exchange_name = 'Kraken'
+    # exchange_name = 'Kraken'
     live_data_URIs = []
     ohlc_data_URIs = []
     for pair in pairs:
@@ -26,9 +26,9 @@ def all_links_Kraken():
     # return tuples so that it can be inserted
     db_format_content = []
     if len(pairs) == len(ohlc_data_URIs) == len(live_data_URIs):
-        for i in range(0, len(pairs)):
+        for index,asset_name in enumerate(pairs):
             db_format_content.append(
-                (pairs[i],exchange_name,ohlc_data_URIs[i],live_data_URIs[i])
+                (str(index + 1), asset_name, ohlc_data_URIs[index], live_data_URIs[index])
             )
 
     return db_format_content
