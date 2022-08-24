@@ -28,7 +28,7 @@ def all_links_Kraken():
     if len(pairs) == len(ohlc_data_URIs) == len(live_data_URIs):
         for index,asset_name in enumerate(pairs):
             db_format_content.append(
-                (str(index + 1), asset_name, ohlc_data_URIs[index], live_data_URIs[index])
+                ("Kraken", asset_name, ohlc_data_URIs[index], live_data_URIs[index])
             )
 
     return db_format_content
