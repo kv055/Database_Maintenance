@@ -1,7 +1,7 @@
-# import find_parent
+import find_parent
 
 from dotenv import load_dotenv
-from API_Connectors.aws_sql_connect import AWS_SQL, DummyData
+from API_Connectors.aws_sql_connect import SQL_Server
 
 from Get_All_Assets.Alpaca_assets import all_links_Alpaca
 from Get_All_Assets.Binance_assets import all_links_Binance
@@ -16,7 +16,7 @@ class update_asset_table:
     """
     def __init__(self):
         # establish connection to the Dummy Data DB
-        self.db_connection = DummyData(load_dotenv)
+        self.db_connection = SQL_Server('DummyData')
         self.Alpaca_URL_List = all_links_Alpaca
         self.Binance_URL_List = all_links_Binance
         self.Kraken_URL_List = all_links_Kraken
