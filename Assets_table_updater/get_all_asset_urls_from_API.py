@@ -1,6 +1,6 @@
 import requests
-import os
-from dotenv import load_dotenv
+# import os
+# from dotenv import load_dotenv
 
 import find_parent
 from API_Connectors.AlpacaConnector import Alpaca
@@ -8,14 +8,14 @@ from API_Connectors.AlpacaConnector import Alpaca
 class all_listed_assets:
     def __init__(self):
         # Fetch all listed Assets from the Alpaca API
-        load_dotenv()
-        pub = os.getenv('ALPACA_PAPERTRADING_PUB_KEY')
-        priv = os.getenv('ALPACA_PAPERTRADING_PRIV_KEY')
-        api_url = os.getenv('ALPACA_PAPERTRADING_URL')
+        # load_dotenv()
+        # pub = os.getenv('ALPACA_PAPERTRADING_PUB_KEY')
+        # priv = os.getenv('ALPACA_PAPERTRADING_PRIV_KEY')
+        # api_url = os.getenv('ALPACA_PAPERTRADING_URL')
         paper_trading_connector = Alpaca(
-            pub,
-            priv,
-            api_url
+            # pub,
+            # priv,
+            # api_url
         )
         self.Alpaca_assets_raw = paper_trading_connector.get_assets()
         
@@ -69,9 +69,9 @@ class all_listed_assets:
         # return tuples so that it can be inserted
         db_format_content = []
         if len(Binance_pairs) == len(ohlc_data_URIs) == len(live_data_URIs):
-            for i in range(0, len(Binance_pairs)):
+            for index,asset_name in enumerate(Binance_pairs):
                 db_format_content.append(
-                    ('Binance',Binance_pairs[i],ohlc_data_URIs[i],live_data_URIs[i])
+                    ('Binance',asset_name,ohlc_data_URIs[index],live_data_URIs[index])
                 )
                 
         return db_format_content
@@ -83,7 +83,6 @@ class all_listed_assets:
 
         for asset in alpaca_assets:
             Alpaca_tickers.append(asset['symbol'])
-        data_provider_name = 'Alpaca'
 
         live_data_URIs = []
         ohlc_data_URIs = []
@@ -97,9 +96,9 @@ class all_listed_assets:
         # return tuples so that it can be inserted
         db_format_content = []
         if len(Alpaca_tickers) == len(ohlc_data_URIs) == len(live_data_URIs):
-            for i in range(0, len(Alpaca_tickers)):
+            for index,asset_name in enumerate(Alpaca_tickers):
                 db_format_content.append(
-                    (data_provider_name,Alpaca_tickers[i],ohlc_data_URIs[i],live_data_URIs[i])
+                    ('Alpaca',asset_name,ohlc_data_URIs[index],live_data_URIs[index])
                 )
                 
         return db_format_content
