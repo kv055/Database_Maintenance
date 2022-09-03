@@ -6,7 +6,8 @@ class generate_request:
     def Alpaca(self, asset_url):
         url = 0
         request_body = 0
-        return [url,request_body]
+        # return [url,request_body]
+        return asset_url
 
     def Binance(self, asset_url):
         # Interval
