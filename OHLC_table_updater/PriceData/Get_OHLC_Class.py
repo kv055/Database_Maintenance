@@ -6,6 +6,7 @@ import talib
 import pandas as pd
 
 from PriceData.Request_URL_Generators import generate_request
+from API_Connectors.AlpacaConnector import Alpaca
 # Sim_config = {
 #     'Strategy':'dummy_data_strategy',
 #     'Parameter':0,
@@ -26,15 +27,18 @@ class Import_OHLC_Data:
     def __init__(self, ohlc_config):
         self.fetch_config = ohlc_config
         self.request_args = generate_request(ohlc_config)
-
+        # initialize Alpaca_Api connector instance
+        self.Alpaca_API = Alpaca()
 
     def get_historical_OHLC(self, asset):
         if asset['Data_Provider'] == 'Alpaca':
             Alpaca_to_fetch = self.request_args.Alpaca(asset['URL'])
-            url_to_fetch = Alpaca_to_fetch[0]
-            req_body = Alpaca_to_fetch[1]
-            self.response_raw = requests.get(url_to_fetch,req_body)
-            self.json = self.response_raw.json()
+            url_to_fetch = Alpaca_to_fetch
+            # req_body = Alpaca_to_fetch[1]
+            self.Alpaca_API.get_OHLC(asset['Ticker'],'1D')
+            l = 0
+            # self.response_raw = requests.get(url_to_fetch)
+            # self.json = self.response_raw.json()
 
         if asset['Data_Provider'] == 'Binance':
             url_to_fetch = self.request_args.Binance(asset['URL'])
@@ -74,7 +78,7 @@ class Import_OHLC_Data:
 
         return self.OHLC_list
     
-    def OHLC_Price_List_w_Metadata(self, asset):
+    def OHLC_Price_List_for_DB(self, asset):
         # Get Asset Config Object
         self.get_historical_OHLC(asset)
 
@@ -87,15 +91,15 @@ class Import_OHLC_Data:
             low = float(element[3])
             close = float(element[4])
             
-            self.OHLC_list.append([
+            self.OHLC_list.append((
                 element[0], 
                 open, 
                 high, 
                 low, 
                 close,
-                # asset['Ticker'],
-                # asset['Data_Provider']
-            ])
+                asset['Ticker'],
+                asset['Data_Provider']
+            ))
             # Every ohlc row must be linked to the asset
             # so that we can identify it in our Database
             # one way would be to use the assets Table as an Index table
