@@ -16,7 +16,7 @@ from API_Connectors.AlpacaConnector import Alpaca
 #     'Data_Set_Size': None
 # }
 # asset_row = {
-#     'URL': 'AAVEBUSD',
+#     'historical_data_url': 'AAVEBUSD',
 #     'Ticker': 'https://api.binance.com/api/v3/klines?symbol=AAVEBUSD&interval=',
 #     'Data_Provider': 'Binance'
 # }
@@ -31,17 +31,27 @@ class Import_OHLC_Data:
         self.Alpaca_API = Alpaca()
 
     def get_historical_OHLC(self, asset):
-        if asset['Data_Provider'] == 'Alpaca':
-            Alpaca_to_fetch = self.request_args.Alpaca(asset['URL'])
-            url_to_fetch = Alpaca_to_fetch
+        if asset['data_provider'] == 'Alpaca':
+            # Alpaca_to_fetch = self.request_args.Alpaca(asset['historical_data_url'])
+            # url_to_fetch = Alpaca_to_fetch
             # req_body = Alpaca_to_fetch[1]
-            self.Alpaca_API.get_OHLC(asset['Ticker'],'1D')
-            l = 0
-            # self.response_raw = requests.get(url_to_fetch)
-            # self.json = self.response_raw.json()
+            ohlc_in_alpaca_raw_format = self.Alpaca_API.get_OHLC(asset['ticker'],'1Day')
+            self.unformated_dataset = []
+            for Bar_dict in ohlc_in_alpaca_raw_format:
+                date_as_string = Bar_dict['t'].replace('Z','')
+                date_object = datetime.strptime(date_as_string, '%Y-%m-%dT%H:%M:%S')
+                date = date_object.timestamp()
+                open = Bar_dict['o']
+                high = Bar_dict['h']
+                low = Bar_dict['l']
+                close = Bar_dict['c']
+                self.unformated_dataset.append(
+                    [date,open,high,low,close]
+                )
 
-        if asset['Data_Provider'] == 'Binance':
-            url_to_fetch = self.request_args.Binance(asset['URL'])
+
+        if asset['data_provider'] == 'Binance':
+            url_to_fetch = self.request_args.Binance(asset['historical_data_url'])
             response_raw = requests.get(url_to_fetch)
             self.unformated_dataset = response_raw.json()
             # Change the weird timestamps from Binanace to propper 
@@ -50,8 +60,8 @@ class Import_OHLC_Data:
                 new_time_stamp = round(ohlc[0] / 1000)
                 ohlc[0] = new_time_stamp
 
-        if asset['Data_Provider'] == 'Kraken':
-            url_to_fetch = self.request_args.Kraken(asset['URL'])
+        if asset['data_provider'] == 'Kraken':
+            url_to_fetch = self.request_args.Kraken(asset['historical_data_url'])
             response_raw = requests.get(url_to_fetch)
             json = response_raw.json()
             keys = list(json['result'].keys())
@@ -78,13 +88,14 @@ class Import_OHLC_Data:
 
         return self.OHLC_list
     
-    def OHLC_Price_List_for_DB(self, asset):
+    def OHLC_Price_List_for_DB(self, asset, timeframe):
         # Get Asset Config Object
         self.get_historical_OHLC(asset)
 
         self.OHLC_list = []
         # Formate the Price Data List
         # Include Ticker and DataProvider 
+        # if self.unformated_dataset == True:
         for element in self.unformated_dataset:
             open = float(element[1])
             high = float(element[2])
@@ -97,16 +108,17 @@ class Import_OHLC_Data:
                 high, 
                 low, 
                 close,
-                asset['Ticker'],
-                asset['Data_Provider']
+                asset['ticker'],
+                asset['data_provider'],
+                timeframe
             ))
-            # Every ohlc row must be linked to the asset
-            # so that we can identify it in our Database
-            # one way would be to use the assets Table as an Index table
-            # and we just use eachs Assets ID and link it to every OHLC row
-            # or we do Ticker and Data_Provider as PK, but thats the 
-            # unconveníent option
-             
+        # Every ohlc row must be linked to the asset
+        # so that we can identify it in our Database
+        # one way would be to use the assets Table as an Index table
+        # and we just use eachs Assets ID and link it to every OHLC row
+        # or we do Ticker and Data_Provider as PK, but thats the 
+        # unconveníent option
+            
         return self.OHLC_list
 
     def Average_Price_List(self,asset):

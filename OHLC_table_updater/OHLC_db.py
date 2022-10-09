@@ -1,36 +1,31 @@
 import find_parent
 from API_Connectors.aws_sql_connect import SQL_Server
 
+# initial setup, only get executed when no tables exist inthe OHLC db,
+# but when the tables alredy exist then it gets skipped
+# executed inside the init of  update_OHLC_table_class
+
+
+
+
+
 class OHLC_DB:
     def __init__(self):
-        self.Assets_db = SQL_Server('DummyData')
-        self.OHLC_db = SQL_Server('OHLC')
-        self.Time_Frame = '1_Day'
+        self.db_connection = SQL_Server('DummyData')
+        self.create_all_OHLC_tables()
 
     def return_all_asset_URLs_to_fetch_OHLC(self):
-        
         # querry all assets from DB
-        urls_to_fetch = []
         query =  f"""
             SELECT * from DummyData.assets
-            WHERE data_provider = 'Kraken'
         """
-        self.Assets_db.cursor.execute(query)
-        table = self.Assets_db.cursor.fetchall()
-        self.Assets_db.close()
-
-        # formate and return the data
-        for row in table:
-            urls_to_fetch.append({
-                'Data_Provider': row[0],
-                'Ticker': row[1],
-                'URL':row[2],
-            })
-        return urls_to_fetch
+        self.db_connection.cursor.execute(query)
+        table = self.db_connection.cursor.fetchall()
+        return table
 
     def create_all_OHLC_tables(self):
         create_OHLC_table = f"""
-            CREATE TABLE IF NOT EXISTS {self.Time_Frame} (
+            CREATE TABLE IF NOT EXISTS OHLC (
                 `Date` DATETIME NOT NULL,
                 `Open` DOUBLE NOT NULL,
                 `High` DOUBLE NOT NULL,
@@ -38,32 +33,50 @@ class OHLC_DB:
                 `Close` DOUBLE NOT NULL,
                 `Data_Provider` varchar(45) NOT NULL,
                 `Ticker` varchar(45) NOT NULL,
+                `Time_Frame` varchar(45) NOT NULL,
                 PRIMARY KEY (`Data_Provider`,`Ticker`,`Date`)
         )
         """
-        self.OHLC_db.cursor.execute(create_OHLC_table)
-        self.OHLC_db.connection.commit()
+        self.db_connection.cursor.execute(create_OHLC_table)
+        self.db_connection.connection.commit()
 
         create_Temp_table_sql = f"""
-            CREATE TABLE IF NOT EXISTS new_ohlc_temp_table LIKE {self.Time_Frame}
+            CREATE TABLE IF NOT EXISTS new_ohlc_temp_table LIKE OHLC
         """
-        self.OHLC_db.cursor.execute(create_Temp_table_sql)
-        self.OHLC_db.connection.commit()
+        self.db_connection.cursor.execute(create_Temp_table_sql)
+        self.db_connection.connection.commit()
 
-    def insert_all_rows_into_temp_table(self,Formated_OHLC_Data_Set):
-        self.OHLC_db.cursor.execute("DELETE FROM new_ohlc_temp_table")
-        self.OHLC_db.connection.commit()
+    def insert_into_temp_table(self,OHLC_Data_Set):
+        # delete old Data_set
+        self.db_connection.cursor.execute("DELETE FROM new_ohlc_temp_table")
+        self.db_connection.connection.commit()
         # insert it into the temp rable
-        insert_sql = "INSERT INTO new_ohlc_temp_table (Date, Open, High, Low, Close, Data_Provier, Ticker) VALUES (%s,%s,%s,%s,%s,%s,%s)"
-        self.OHLC_db.cursor.executemany(insert_sql, Formated_OHLC_Data_Set)
-        self.OHLC_db.connection.commit()
+        insert_sql = f"INSERT INTO new_ohlc_temp_table (Date, Open, High, Low, Close, Ticker, Data_Provider, Time_Frame) VALUES (FROM_UNIXTIME(%s),%s,%s,%s,%s,%s,%s,%s)"
+        self.db_connection.cursor.executemany(insert_sql, OHLC_Data_Set)
+        self.db_connection.connection.commit()
 
-    def insert_new_rows_into_OHLC_table(self):
-        join_sql = f"""
-            insert into 1_Day
-                select new_ohlc_temp_table.* from new_ohlc_temp_table
-                left join 1_Day on new_ohlc_temp_table.Date = 1_Day.Date
-                -- where 1_Day.Date is null
+    def insert_into_OHLC_table(self):
+        # Compare entries with left/right joins
+        count_sql = f"""
+            select * from new_ohlc_temp_table
+            left join OHLC 
+                ON new_ohlc_temp_table.Date = OHLC.Date
+                AND new_ohlc_temp_table.Data_Provider = OHLC.Data_Provider
+                AND new_ohlc_temp_table.Ticker = OHLC.Ticker
+            where OHLC.Date is null
         """
-        self.OHLC_db.cursor.execute(join_sql)
-        self.OHLC_db.connection.commit()
+        self.db_connection.cursor.execute(count_sql)
+        new_rows = self.db_connection.cursor.fetchall()
+
+        join_sql = f"""
+            insert into OHLC
+                select new_ohlc_temp_table.* from new_ohlc_temp_table
+                    left join OHLC 
+                        on new_ohlc_temp_table.Date = OHLC.Date
+                        AND new_ohlc_temp_table.Data_Provider = OHLC.Data_Provider
+                        AND new_ohlc_temp_table.Ticker = OHLC.Ticker
+                    where OHLC.Date is null
+        """
+        self.db_connection.cursor.execute(join_sql)
+        self.db_connection.connection.commit()
+

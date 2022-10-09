@@ -25,7 +25,7 @@ class SQL_Server:
             database = DB_Name
             )
         
-        self.cursor = self.connection.cursor()
+        self.cursor = self.connection.cursor(dictionary=True)
 
     def connect_db(self,db_name):
         self.connection = mysql.connector.connect(
@@ -34,7 +34,7 @@ class SQL_Server:
             host = self.ENDPOINT,
             database = db_name
         )
-        self.cursor = self.connection.cursor()
+        self.cursor = self.connection.cursor(dictionary=True)
 
     def close(self):
         self.connection.close() 
