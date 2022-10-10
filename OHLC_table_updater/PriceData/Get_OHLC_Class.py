@@ -5,7 +5,7 @@ import numpy
 import talib
 import pandas as pd
 
-from PriceData.Request_URL_Generators import generate_request
+from OHLC_table_updater.PriceData.Request_URL_Generators import generate_request
 from API_Connectors.AlpacaConnector import Alpaca
 # Sim_config = {
 #     'Strategy':'dummy_data_strategy',

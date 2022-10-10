@@ -2,7 +2,7 @@ import find_parent
 
 from API_Connectors.aws_sql_connect import SQL_Server
 
-from get_all_asset_urls_from_API import all_listed_assets
+from Assets_table_updater.get_all_asset_urls_from_API import all_listed_assets
 
 class update_asset_table:
     """
@@ -14,6 +14,15 @@ class update_asset_table:
     def __init__(self):
         # establish connection to the Dummy Data DB
         self.db_connection = SQL_Server('DummyData')
+        # Todo Go to assets table and delete the ID column 
+        # delete_id_column = f"""
+        #     ALTER TABLE `DummyData`.`assets` 
+        #     DROP COLUMN `id`,
+        #     DROP INDEX `id_UNIQUE` ;
+        #     ;
+        # """
+        # self.db_connection.cursor.execute(delete_id_column)
+        # self.db_connection.connection.commit()
 
         assets_api_instance = all_listed_assets()
         self.Alpaca_URL_List = assets_api_instance.all_links_Alpaca
@@ -79,12 +88,10 @@ class update_asset_table:
         self.db_connection.cursor.execute(add_newly_listed_assets_sql)
         self.db_connection.connection.commit()
 
-
-test_run = update_asset_table()
-test_run.set_Alpaca_URL_List()
-test_run.enter_into_db()
-test_run.set_Binance_URL_List()
-test_run.enter_into_db()
-test_run.set_Kraken_URL_List()
-test_run.enter_into_db()
-l=0
+    def create_ID_column(self):
+        create_id_column_sql = f"""ALTER TABLE `DummyData`.`assets` 
+            ADD COLUMN `id` INT NOT NULL AUTO_INCREMENT AFTER `live_data_req_body`,
+            ADD UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE;
+        ;"""
+        self.db_connection.cursor.execute(create_id_column_sql)
+        self.db_connection.connection.commit()

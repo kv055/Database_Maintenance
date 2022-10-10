@@ -1,10 +1,9 @@
 import find_parent
 
-from API_Connectors.aws_sql_connect import SQL_Server
-from PriceData.Get_OHLC_Class import Import_OHLC_Data
-from OHLC_db import OHLC_DB
+from OHLC_table_updater.PriceData.Get_OHLC_Class import Import_OHLC_Data
+from OHLC_table_updater.OHLC_db import OHLC_DB
 
-class update_asset_table:
+class update_OHLC_table:
     def __init__(self):
         # Get all listed Asset URL's from DB
         self.ohlc_tables = OHLC_DB()
@@ -29,7 +28,6 @@ class update_asset_table:
                 self.ohlc_tables.insert_into_temp_table(Formated_OHLC_Data_Set)
                 # Join on TimeStamp
                 self.ohlc_tables.insert_into_OHLC_table()
+                print(asset['ticker'],asset['data_provider'])
 
 
-lol = update_asset_table()
-lol.fetch_OHLC_from_API_and_update_table()
