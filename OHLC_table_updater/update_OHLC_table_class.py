@@ -1,13 +1,13 @@
 import find_parent
-
-from OHLC_table_updater.PriceData.Get_OHLC_Class import Import_OHLC_Data
 from OHLC_table_updater.OHLC_db import OHLC_DB
+from OHLC_table_updater.PriceData.Get_OHLC_Class import Import_OHLC_Data
+
 
 class update_OHLC_table:
     def __init__(self):
         # Get all listed Asset URL's from DB
         self.ohlc_tables = OHLC_DB()
-        self.all_asset_URLs = self.ohlc_tables.return_all_asset_URLs_to_fetch_OHLC()
+        self.all_asset_URLs = self.ohlc_tables.return_all_asset_URLs_from_dataprovider()
         self.all_configs = []
         self.timeframe = '1_Day'
         config = {
@@ -28,6 +28,6 @@ class update_OHLC_table:
                 self.ohlc_tables.insert_into_temp_table(Formated_OHLC_Data_Set)
                 # Join on TimeStamp
                 self.ohlc_tables.insert_into_OHLC_table()
-                print(asset['ticker'],asset['data_provider'])
+                print('Inserted',asset['data_provider'],asset['ticker'])
 
 

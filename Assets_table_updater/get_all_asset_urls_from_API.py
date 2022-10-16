@@ -1,9 +1,11 @@
 import requests
-# import os
-# from dotenv import load_dotenv
 
 import find_parent
 from API_Connectors.AlpacaConnector import Alpaca
+
+# import os
+# from dotenv import load_dotenv
+
 
 class all_listed_assets:
     def __init__(self):
@@ -49,6 +51,7 @@ class all_listed_assets:
                     ("Kraken", asset_name, ohlc_data_URIs[index], live_data_URIs[index])
                 )
 
+        print('All listed Kraken assets fetched') 
         return db_format_content
 
     def all_links_Binance(self):
@@ -73,11 +76,14 @@ class all_listed_assets:
                 db_format_content.append(
                     ('Binance',asset_name,ohlc_data_URIs[index],live_data_URIs[index])
                 )
-                
+
+        print('All listed Binance assets fetched')        
         return db_format_content
 
     def all_links_Alpaca(self):
+        # filter tradable assets
         alpaca_assets = [asset for asset in self.Alpaca_assets_raw if asset['tradable'] == True]
+        alpaca_assets = [asset for asset in self.Alpaca_assets_raw if asset['class'] != 'crypto']
 
         Alpaca_tickers = []
 
@@ -100,7 +106,8 @@ class all_listed_assets:
                 db_format_content.append(
                     ('Alpaca',asset_name,ohlc_data_URIs[index],live_data_URIs[index])
                 )
-                
+        
+        print('All listed Alpaca assets fetched')  
         return db_format_content
 
 # test = all_listed_assets()

@@ -14,10 +14,24 @@ class OHLC_DB:
         self.db_connection = SQL_Server('DummyData')
         self.create_all_OHLC_tables()
 
-    def return_all_asset_URLs_to_fetch_OHLC(self):
+    def return_all_data_providers(self):
+        query_all_data_providers_sql =  f"""
+            SELECT DISTINCT data_provider from DummyData.assets
+        """
+        self.db_connection.cursor.execute(query_all_data_providers_sql)
+        table = self.db_connection.cursor.fetchall()
+        all_data_providers = []
+        for pair in table:
+            data_provider = list(pair.values())
+            all_data_providers.append(data_provider[0])
+        
+        return all_data_providers
+
+    def return_all_asset_URLs_from_dataprovider(self,dataprovider):
         # querry all assets from DB
         query =  f"""
             SELECT * from DummyData.assets
+            WHERE assets.data_provider = '{dataprovider}'
         """
         self.db_connection.cursor.execute(query)
         table = self.db_connection.cursor.fetchall()

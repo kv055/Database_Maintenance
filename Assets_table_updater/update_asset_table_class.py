@@ -1,8 +1,7 @@
 import find_parent
-
 from API_Connectors.aws_sql_connect import SQL_Server
-
 from Assets_table_updater.get_all_asset_urls_from_API import all_listed_assets
+
 
 class update_asset_table:
     """
@@ -14,14 +13,57 @@ class update_asset_table:
     def __init__(self):
         # establish connection to the Dummy Data DB
         self.db_connection = SQL_Server('DummyData')
-        # Todo Go to assets table and delete the ID column 
-        # delete_id_column = f"""
+        # Create Assets Table if it doesnts exist
+        create_assets_table_sql = f"""
+            CREATE TABLE IF NOT EXISTS `assets` (
+            `data_provider` varchar(255) NOT NULL,
+            `ticker` varchar(45) NOT NULL,
+            `historical_data_url` varchar(255) DEFAULT NULL,
+            `historical_data_req_body` varchar(255) DEFAULT NULL,
+            `live_data_url` varchar(255) DEFAULT NULL,
+            `live_data_req_body` varchar(255) DEFAULT NULL,
+            PRIMARY KEY (`data_provider`,`ticker`)
+            )
+        """
+        self.db_connection.cursor.execute(create_assets_table_sql)
+        self.db_connection.connection.commit()
+
+        # LOGIC ERROR TO BE FIXED, BUT WORKS FOR NOW AS LONG AS THE assets TABLE
+        # DOESNT GET DELETED
+        # if create_assets_table_sql gets executed then there will be an error
+        # thrown once the delete_id_column_sql gets executed
+        # beacause the nonexistend id Column
+
+        # # Delete id column if table exists
+        # delete_id_column_sql = f"""
         #     ALTER TABLE `DummyData`.`assets` 
         #     DROP COLUMN `id`,
         #     DROP INDEX `id_UNIQUE` ;
         #     ;
         # """
-        # self.db_connection.cursor.execute(delete_id_column)
+        # self.db_connection.cursor.execute(delete_id_column_sql)
+        # self.db_connection.connection.commit()
+        
+        # this statement would fix the above mentioned error but i
+        # cant figure out the correct syntax
+
+        # create_table_or_delete_id_column_sql_sql = f"""
+        #     IF NOT EXISTS(
+        #     CREATE TABLE `assets` (
+        #         `data_provider` varchar(255) NOT NULL,
+        #         `ticker` varchar(45) NOT NULL,
+        #         `historical_data_url` varchar(255) DEFAULT NULL,
+        #         `historical_data_req_body` varchar(255) DEFAULT NULL,
+        #         `live_data_url` varchar(255) DEFAULT NULL,
+        #         `live_data_req_body` varchar(255) DEFAULT NULL,
+        #         PRIMARY KEY (`data_provider`, `ticker`)
+        #     ) ELSE
+        #     ALTER TABLE `DummyData`.`assets` 
+        #         DROP COLUMN `id`,
+        #         DROP INDEX `id_UNIQUE`;
+        #     END IF;
+        # """
+        # self.db_connection.cursor.execute(create_table_or_delete_id_column_sql_sql)
         # self.db_connection.connection.commit()
 
         assets_api_instance = all_listed_assets()
@@ -46,7 +88,8 @@ class update_asset_table:
         self.db_connection.cursor.execute("CREATE TABLE IF NOT EXISTS new_urls LIKE assets")
         self.db_connection.connection.commit()
         # no clue what that does
-        self.db_connection.cursor.execute("DELETE FROM new_urls WHERE data_provider IS NOT NULL")
+        self.db_connection.cursor.execute("DELETE FROM new_urls")
+        # WHERE data_provider IS NOT NULL
         self.db_connection.connection.commit()
         # insert all new records into the temp table
         insert_sql = "INSERT INTO new_urls (data_provider, ticker, historical_data_url, live_data_url) VALUES (%s,%s,%s,%s)"
@@ -87,6 +130,8 @@ class update_asset_table:
         """
         self.db_connection.cursor.execute(add_newly_listed_assets_sql)
         self.db_connection.connection.commit()
+
+        print(f'Inserted all assets from {self.data_provider}')
 
     def create_ID_column(self):
         create_id_column_sql = f"""ALTER TABLE `DummyData`.`assets` 

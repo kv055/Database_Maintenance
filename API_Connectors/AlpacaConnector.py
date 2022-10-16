@@ -1,7 +1,9 @@
 import os
-from dotenv import load_dotenv
 from datetime import datetime
+
 import alpaca_trade_api as tradeapi
+from dotenv import load_dotenv
+
 
 class Alpaca:
     def __init__(self):

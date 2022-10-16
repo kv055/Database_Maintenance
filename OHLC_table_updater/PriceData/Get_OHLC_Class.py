@@ -1,12 +1,15 @@
-import find_parent
 from datetime import datetime
-import requests
-import numpy
-import talib
-import pandas as pd
 
-from OHLC_table_updater.PriceData.Request_URL_Generators import generate_request
+import numpy
+import pandas as pd
+import requests
+import talib
+
+import find_parent
 from API_Connectors.AlpacaConnector import Alpaca
+from OHLC_table_updater.PriceData.Request_URL_Generators import \
+    generate_request
+
 # Sim_config = {
 #     'Strategy':'dummy_data_strategy',
 #     'Parameter':0,
@@ -48,7 +51,6 @@ class Import_OHLC_Data:
                 self.unformated_dataset.append(
                     [date,open,high,low,close]
                 )
-
 
         if asset['data_provider'] == 'Binance':
             url_to_fetch = self.request_args.Binance(asset['historical_data_url'])
