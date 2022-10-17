@@ -34,15 +34,15 @@ class update_asset_table:
         # thrown once the delete_id_column_sql gets executed
         # beacause the nonexistend id Column
 
-        # # Delete id column if table exists
-        # delete_id_column_sql = f"""
-        #     ALTER TABLE `DummyData`.`assets` 
-        #     DROP COLUMN `id`,
-        #     DROP INDEX `id_UNIQUE` ;
-        #     ;
-        # """
-        # self.db_connection.cursor.execute(delete_id_column_sql)
-        # self.db_connection.connection.commit()
+        # Delete id column if table exists
+        delete_id_column_sql = f"""
+            ALTER TABLE `DummyData`.`assets` 
+            DROP COLUMN `id`,
+            DROP INDEX `id_UNIQUE` ;
+            ;
+        """
+        self.db_connection.cursor.execute(delete_id_column_sql)
+        self.db_connection.connection.commit()
         
         # this statement would fix the above mentioned error but i
         # cant figure out the correct syntax
@@ -84,6 +84,10 @@ class update_asset_table:
         self.data_provider = 'Kraken'
 
     def enter_into_db(self):
+        # # create temp table to hold all new data 
+        # self.db_connection.cursor.execute("CREATE TEMPORARY TABLE temporary_new_assets LIKE assets")
+        # self.db_connection.connection.commit()
+        
         # create temp table to hold all new data 
         self.db_connection.cursor.execute("CREATE TABLE IF NOT EXISTS new_urls LIKE assets")
         self.db_connection.connection.commit()
@@ -91,7 +95,7 @@ class update_asset_table:
         self.db_connection.cursor.execute("DELETE FROM new_urls")
         # WHERE data_provider IS NOT NULL
         self.db_connection.connection.commit()
-        # insert all new records into the temp table
+        
         insert_sql = "INSERT INTO new_urls (data_provider, ticker, historical_data_url, live_data_url) VALUES (%s,%s,%s,%s)"
         self.db_connection.cursor.executemany(insert_sql, self.data_set[:])
         self.db_connection.connection.commit()

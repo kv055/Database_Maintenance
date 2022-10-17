@@ -16,3 +16,5 @@ ohlc_table = update_OHLC_table()
 ohlc_table.fetch_OHLC_from_API_and_update_table()
 
 l = 0
+# ToDo: Instead of just logging with Print either 
+# write everything in a txt file or finde more sophisticated methods

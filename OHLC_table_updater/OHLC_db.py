@@ -5,10 +5,6 @@ from API_Connectors.aws_sql_connect import SQL_Server
 # but when the tables alredy exist then it gets skipped
 # executed inside the init of  update_OHLC_table_class
 
-
-
-
-
 class OHLC_DB:
     def __init__(self):
         self.db_connection = SQL_Server('DummyData')
@@ -37,6 +33,15 @@ class OHLC_DB:
         table = self.db_connection.cursor.fetchall()
         return table
 
+    def return_all_asset_URLs(self):
+        # querry all assets from DB
+        query =  f"""
+            SELECT * from DummyData.assets
+        """
+        self.db_connection.cursor.execute(query)
+        table = self.db_connection.cursor.fetchall()
+        return table
+
     def create_all_OHLC_tables(self):
         create_OHLC_table = f"""
             CREATE TABLE IF NOT EXISTS OHLC (
@@ -60,7 +65,21 @@ class OHLC_DB:
         self.db_connection.cursor.execute(create_Temp_table_sql)
         self.db_connection.connection.commit()
 
+        create_Temp_table_sql = f"""
+            CREATE TEMPORARY TABLE temporary_new_OHLC LIKE OHLC
+        """
+        self.db_connection.cursor.execute(create_Temp_table_sql)
+        self.db_connection.connection.commit()
+
     def insert_into_temp_table(self,OHLC_Data_Set):
+        # # delete old Data_set
+        # self.db_connection.cursor.execute("DELETE FROM temporary_new_OHLC")
+        # self.db_connection.connection.commit()
+        # # insert it into the temp rable
+        # insert_sql = f"INSERT INTO temporary_new_OHLC (Date, Open, High, Low, Close, Ticker, Data_Provider, Time_Frame) VALUES (FROM_UNIXTIME(%s),%s,%s,%s,%s,%s,%s,%s)"
+        # self.db_connection.cursor.executemany(insert_sql, OHLC_Data_Set)
+        # self.db_connection.connection.commit()
+        
         # delete old Data_set
         self.db_connection.cursor.execute("DELETE FROM new_ohlc_temp_table")
         self.db_connection.connection.commit()

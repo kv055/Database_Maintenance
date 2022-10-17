@@ -7,7 +7,7 @@ class update_OHLC_table:
     def __init__(self):
         # Get all listed Asset URL's from DB
         self.ohlc_tables = OHLC_DB()
-        self.all_asset_URLs = self.ohlc_tables.return_all_asset_URLs_from_dataprovider()
+        self.all_asset_URLs = self.ohlc_tables.return_all_asset_URLs()
         self.all_configs = []
         self.timeframe = '1_Day'
         config = {
