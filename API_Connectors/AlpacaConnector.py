@@ -22,7 +22,9 @@ class Alpaca:
         )
 
     def get_assets(self):
-        return self.instance.list_assets()
+        # return self.instance.list_assets()
+        all_tradable_assets = self.instance.list_tradable_assets()
+        return all_tradable_assets
         
     def get_OHLC(self,asset, timeframe):
         

@@ -81,8 +81,7 @@ class all_listed_assets:
         return db_format_content
 
     def all_links_Alpaca(self):
-        # filter tradable assets
-        alpaca_assets = [asset for asset in self.Alpaca_assets_raw if asset['tradable'] == True]
+        # filter out all crypto assets
         alpaca_assets = [asset for asset in self.Alpaca_assets_raw if asset['class'] != 'crypto']
 
         Alpaca_tickers = []
