@@ -1,14 +1,14 @@
 from datetime import datetime
 
-import numpy
 import pandas as pd
 import requests
-import talib
 
 import find_parent
 from API_Connectors.AlpacaConnector import Alpaca
-from OHLC_table_updater.PriceData.Request_URL_Generators import \
-    generate_request
+from OHLC_table_updater.PriceData.Request_URL_Generators import generate_request
+
+# import talib
+
 
 # Sim_config = {
 #     'Strategy':'dummy_data_strategy',
@@ -123,57 +123,57 @@ class Import_OHLC_Data:
             
         return self.OHLC_list
 
-    def Average_Price_List(self,asset):
-        """Method"""
-        self.get_historical_OHLC(asset)
+    # def Average_Price_List(self,asset):
+    #     """Method"""
+    #     self.get_historical_OHLC(asset)
         
-        self.create_numpy_array()
+    #     self.create_numpy_array()
 
-        avg_price_instance = talib.AVGPRICE(
-            self.numpy_array[1], 
-            self.numpy_array[2], 
-            self.numpy_array[3], 
-            self.numpy_array[4]
-            ).tolist()
+    #     avg_price_instance = talib.AVGPRICE(
+    #         self.numpy_array[1], 
+    #         self.numpy_array[2], 
+    #         self.numpy_array[3], 
+    #         self.numpy_array[4]
+    #         ).tolist()
 
-        self.average_price = []
+    #     self.average_price = []
 
-        for averaged_price in avg_price_instance:
-            self.average_price.append(averaged_price)
+    #     for averaged_price in avg_price_instance:
+    #         self.average_price.append(averaged_price)
 
-        return self.average_price
+    #     return self.average_price
 
-    def create_numpy_array(self):
-        """Method"""
-        # creating empty lists
-        date = []
-        op = []
-        hi = []
-        lo = []
-        cl = []
+    # def create_numpy_array(self):
+    #     """Method"""
+    #     # creating empty lists
+    #     date = []
+    #     op = []
+    #     hi = []
+    #     lo = []
+    #     cl = []
 
-        # pushing data into lists
-        for element in self.OHLC_list:
-            date.append(element[0])
-            op.append(element[1])
-            hi.append(element[2])
-            lo.append(element[3])
-            cl.append(element[4])
+    #     # pushing data into lists
+    #     for element in self.OHLC_list:
+    #         date.append(element[0])
+    #         op.append(element[1])
+    #         hi.append(element[2])
+    #         lo.append(element[3])
+    #         cl.append(element[4])
 
-        # converting list to array (for talib)
+    #     # converting list to array (for talib)
         
-        open = numpy.array(op)
-        high = numpy.array(hi)
-        low = numpy.array(lo)
-        close = numpy.array(cl)
+    #     open = numpy.array(op)
+    #     high = numpy.array(hi)
+    #     low = numpy.array(lo)
+    #     close = numpy.array(cl)
 
-        self.numpy_array = [
-            date,
-            open,
-            high,
-            low,
-            close
-        ]
+    #     self.numpy_array = [
+    #         date,
+    #         open,
+    #         high,
+    #         low,
+    #         close
+    #     ]
 
     def Create_Pandas_Dataframe(self):
         self.OHLC_Price_List()

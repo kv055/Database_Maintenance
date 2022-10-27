@@ -17,4 +17,5 @@ ohlc_table.fetch_OHLC_from_API_and_update_table()
 
 l = 0
 # ToDo: Instead of just logging with Print either 
-# write everything in a txt file or finde more sophisticated methods
+# write everything in a txt file or finde more sophisticated 
+# start and stop time at the execution of thiis file and log it
