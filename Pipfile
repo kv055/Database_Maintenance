@@ -1,0 +1,18 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"mysql.connector" = "*"
+requests = "*"
+alpaca-trade-api = "*"
+numpy = "*"
+pandas = "*"
+python-dotenv = "*"
+datetime = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"

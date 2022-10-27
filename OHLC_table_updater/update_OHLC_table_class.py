@@ -22,12 +22,12 @@ class update_OHLC_table:
         # Get PriceData
         for configuration in self.all_configs:
             Pricedata = Import_OHLC_Data(configuration)
-            for asset in self.all_asset_URLs:
+            for index,asset in enumerate(self.all_asset_URLs):
                 # Fetch the Price Data Sets from external API's
                 Formated_OHLC_Data_Set = Pricedata.OHLC_Price_List_for_DB(asset, self.timeframe)
                 self.ohlc_tables.insert_into_temp_table(Formated_OHLC_Data_Set)
                 # Join on TimeStamp
                 self.ohlc_tables.insert_into_OHLC_table()
-                print('Inserted',asset['data_provider'],asset['ticker'])
+                print('Inserted',asset['data_provider'],asset['ticker'],index)
 
 
