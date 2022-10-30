@@ -4,7 +4,6 @@ from datetime import datetime
 import alpaca_trade_api as tradeapi
 from dotenv import load_dotenv
 
-
 class Alpaca:
     def __init__(self):
         load_dotenv()
@@ -23,6 +22,19 @@ class Alpaca:
 
     def get_assets(self):
         # return self.instance.list_assets()
+        
+        # def list_tradable_assets(self) -> Assets:
+        # """Get a list of assets"""
+        # params = {
+        #     'status': 'active',
+        #     'tradable': 'true'
+        # }
+        # resp = self.get('/assets', params)
+        # if self._use_raw_data:
+        #     return resp
+        # else:
+        #     return [self.response_wrapper(o, Asset) for o in resp]
+
         all_tradable_assets = self.instance.list_tradable_assets()
         return all_tradable_assets
         

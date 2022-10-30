@@ -2,6 +2,7 @@ import requests
 
 import find_parent
 from API_Connectors.AlpacaConnector import Alpaca
+# from API_Connectors.inherit import Alpaca_Inherited
 
 # import os
 # from dotenv import load_dotenv
@@ -14,12 +15,16 @@ class all_listed_assets:
         # pub = os.getenv('ALPACA_PAPERTRADING_PUB_KEY')
         # priv = os.getenv('ALPACA_PAPERTRADING_PRIV_KEY')
         # api_url = os.getenv('ALPACA_PAPERTRADING_URL')
+
         paper_trading_connector = Alpaca(
             # pub,
             # priv,
             # api_url
         )
         self.Alpaca_assets_raw = paper_trading_connector.get_assets()
+
+        # self.alpaca_connector = Alpaca_Inherited()
+        # self.Alpaca_assets_raw =self.alpaca_connector.list_tradable_assets()
         
         # Fetch all listed Assets from the Binance API
         request_all_Binance_pairs = requests.get('https://api.binance.com/api/v3/exchangeInfo')
