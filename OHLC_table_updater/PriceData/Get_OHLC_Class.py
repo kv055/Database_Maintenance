@@ -1,14 +1,9 @@
 from datetime import datetime
-
-import pandas as pd
 import requests
 
 import find_parent
 from API_Connectors.AlpacaConnector import Alpaca
 from OHLC_table_updater.PriceData.Request_URL_Generators import generate_request
-
-# import talib
-
 
 # Sim_config = {
 #     'Strategy':'dummy_data_strategy',
@@ -104,12 +99,16 @@ class Import_OHLC_Data:
             low = float(element[3])
             close = float(element[4])
             
+            # calculate average Price
+            average = self.Average_Price(open,high,low,close)
+
             self.OHLC_list.append((
                 element[0], 
                 open, 
                 high, 
                 low, 
                 close,
+                average,
                 asset['ticker'],
                 asset['data_provider'],
                 timeframe
@@ -123,216 +122,10 @@ class Import_OHLC_Data:
             
         return self.OHLC_list
 
-    # def Average_Price_List(self,asset):
-    #     """Method"""
-    #     self.get_historical_OHLC(asset)
-        
-    #     self.create_numpy_array()
-
-    #     avg_price_instance = talib.AVGPRICE(
-    #         self.numpy_array[1], 
-    #         self.numpy_array[2], 
-    #         self.numpy_array[3], 
-    #         self.numpy_array[4]
-    #         ).tolist()
-
-    #     self.average_price = []
-
-    #     for averaged_price in avg_price_instance:
-    #         self.average_price.append(averaged_price)
-
-    #     return self.average_price
-
-    # def create_numpy_array(self):
-    #     """Method"""
-    #     # creating empty lists
-    #     date = []
-    #     op = []
-    #     hi = []
-    #     lo = []
-    #     cl = []
-
-    #     # pushing data into lists
-    #     for element in self.OHLC_list:
-    #         date.append(element[0])
-    #         op.append(element[1])
-    #         hi.append(element[2])
-    #         lo.append(element[3])
-    #         cl.append(element[4])
-
-    #     # converting list to array (for talib)
-        
-    #     open = numpy.array(op)
-    #     high = numpy.array(hi)
-    #     low = numpy.array(lo)
-    #     close = numpy.array(cl)
-
-    #     self.numpy_array = [
-    #         date,
-    #         open,
-    #         high,
-    #         low,
-    #         close
-    #     ]
-
-    def Create_Pandas_Dataframe(self):
-        self.OHLC_Price_List()
-        self.PriceDataFrame = pd.Single_DataFrame(
-            self.OHLC_list
-            ,columns=(
-            'TimeStamp','Open','High','Low','Close'
-            # ,'Volume','Close time',
-            # 'Quote asset volume','Number of trades','Taker buy base asset volume',
-            # 'Taker buy quote asset volume','ignore'
-            )
-        )
-    
-    def Pandas_Dataframe_Average_Price(self, name):
-        
-        self.create_pandas_dataframe()
-
-        # self.PriceDataFrame['TimeStamp']= pd.to_datetime(self.PriceDataFrame['TimeStamp'], unit='ms')
-        # self.PriceDataFrame.set_index("TimeStamp", inplace = True)
-        self.PriceDataFrame["Close"] = pd.to_numeric(self.PriceDataFrame["Close"])
-
-        del self.PriceDataFrame['Open']
-        del self.PriceDataFrame['High']
-        del self.PriceDataFrame['Low']
-        # del self.PriceDataFrame['Volume']
-        # del self.PriceDataFrame['Close time']
-        # del self.PriceDataFrame['Quote asset volume']
-        # del self.PriceDataFrame['Number of trades']
-        # del self.PriceDataFrame['Taker buy base asset volume']
-        # del self.PriceDataFrame['Taker buy quote asset volume']
-        # del self.PriceDataFrame['ignore']
-
-        self.PriceDataFrame.rename(columns = {'Close':name}, inplace = True) 
-        return self.PriceDataFrame
-
-    def Pandas_Dataframe_OHLC_Price(self):
-
-        self.create_pandas_dataframe()
-
-        change_date_from_timestamp = pd.to_datetime(self.PriceDataFrame['TimeStamp'], unit='ms')
-        self.PriceDataFrame['TimeStamp'] = change_date_from_timestamp 
-        # pd.to_datetime(self.PriceDataFrame['TimeStamp'], unit='ms')
-        self.PriceDataFrame.set_index("TimeStamp", inplace = True)
-    
-        self.PriceDataFrame['Open'] = pd.to_numeric(self.PriceDataFrame['Open'])
-        self.PriceDataFrame['High'] = pd.to_numeric(self.PriceDataFrame['High'])
-        self.PriceDataFrame['Low'] = pd.to_numeric(self.PriceDataFrame['Low'])
-        self.PriceDataFrame['Close'] = pd.to_numeric(self.PriceDataFrame["Close"])    
-
-        return self.PriceDataFrame
+    def Average_Price(self,open,high,low,close):
+        add_all = open+high+low+close
+        average = add_all/4
+        return average
 
 
-# class ImportData:
-#     """Class"""
-#     def __init__(self):
-#         self.bin_url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=70'
-#         self.OHLC_list = []
-#         self.json = None
-#         self.connect_data()
-#         self.is_OHLC_list = False
-
-#     def connect_data(self, url=None):
-#         """if we want to load data other than the url specified in __init__"""
-#         if url is not None:
-#             self.bin_url = url
-#         response = requests.get(self.bin_url)
-#         self.json = response.json()
-#         # new data has been loaded, thus not OHLC_list
-#         self.is_OHLC_list = False
-
-#     def OHLC_Price_List(self):
-#         """
-#         It can be advantageous to determine whether data has been OHLC_list already
-#         This has the benefit of code readability wherein "format_data" is always called,
-#         but the system doesn't have to re-run the format if not required
-#         """
-#         if self.is_OHLC_list:
-#             return True
-
-#         for element in self.json:
-#             op = round(float(element[1]), 3)
-#             hi = round(float(element[2]), 3)
-#             lo = round(float(element[3]), 3)
-#             cl = round(float(element[4]), 3)
-#             # op = float(element[1])
-#             # hi = float(element[2])
-#             # lo = float(element[3])
-#             # cl = float(element[4])
-#             self.OHLC_list.append([round(element[0] / 1000), op, hi, lo, cl])
-#         self.is_OHLC_list = True
-#         return True
-
-#     def create_numpy_array(self):
-#         """Method"""
-#         # creating empty lists
-#         date = []
-#         op = []
-#         hi = []
-#         lo = []
-#         cl = []
-
-#         # pushing data into lists
-#         for element in self.OHLC_list:
-#             date.append(element[0])
-#             op.append(element[1])
-#             hi.append(element[2])
-#             lo.append(element[3])
-#             cl.append(element[4])
-
-#         # converting list to array (for talib)
-        
-#         open = numpy.array(op)
-#         high = numpy.array(hi)
-#         low = numpy.array(lo)
-#         close = numpy.array(cl)
-
-#         self.numpy_array = [
-#             date,
-#             open,
-#             high,
-#             low,
-#             close
-#         ]
-    
-#     def get_format_data(self):
-#         """Method"""
-#         if len(self.OHLC_list) < 1:
-#             self.format_data()
-#         return self.OHLC_list
-
-#     def reset_format_data(self):
-#         """Method"""
-#         self.OHLC_list = []
-
-#     def Average_Price_List(self):
-#         """Method"""
-#         self.create_numpy_array()
-
-#         avg_price_instance = talib.AVGPRICE(
-#             self.numpy_array[1], 
-#             self.numpy_array[2], 
-#             self.numpy_array[3], 
-#             self.numpy_array[4]
-#             ).tolist()
-
-#         self.average_price = []
-
-#         for averaged_price in avg_price_instance:
-#             self.average_price.append(averaged_price)
-
-#         return self.average_price
-
-    # def get_average(self):
-    #     """Method"""
-    #     # if len(self.average[0]) == 0 or len(self.average[1]) == 0:
-    #     #     self.calc_average()
-    #     return self.average_price
-
-
-# Formated in Lists
-# Formated in Dict
 

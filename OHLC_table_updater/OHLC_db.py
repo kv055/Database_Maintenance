@@ -50,6 +50,7 @@ class OHLC_DB:
                 `High` DOUBLE NOT NULL,
                 `Low` DOUBLE NOT NULL,
                 `Close` DOUBLE NOT NULL,
+                `Average` DOUBLE NOT NULL,
                 `Data_Provider` varchar(45) NOT NULL,
                 `Ticker` varchar(45) NOT NULL,
                 `Time_Frame` varchar(45) NOT NULL,
@@ -84,7 +85,7 @@ class OHLC_DB:
         self.db_connection.cursor.execute("DELETE FROM new_ohlc_temp_table")
         self.db_connection.connection.commit()
         # insert it into the temp rable
-        insert_sql = f"INSERT INTO new_ohlc_temp_table (Date, Open, High, Low, Close, Ticker, Data_Provider, Time_Frame) VALUES (FROM_UNIXTIME(%s),%s,%s,%s,%s,%s,%s,%s)"
+        insert_sql = f"INSERT INTO new_ohlc_temp_table (Date, Open, High, Low, Close, Average, Ticker, Data_Provider, Time_Frame) VALUES (FROM_UNIXTIME(%s),%s,%s,%s,%s,%s,%s,%s,%s)"
         self.db_connection.cursor.executemany(insert_sql, OHLC_Data_Set)
         self.db_connection.connection.commit()
 
