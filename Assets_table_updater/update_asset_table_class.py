@@ -22,6 +22,8 @@ class update_asset_table:
             `historical_data_req_body` varchar(255) DEFAULT NULL,
             `live_data_url` varchar(255) DEFAULT NULL,
             `live_data_req_body` varchar(255) DEFAULT NULL,
+            `first_available_datapoint` DATETIME NOT NULL,
+            `last_available_datapoint` DATETIME NOT NULL,
             PRIMARY KEY (`data_provider`,`ticker`)
             )
         """
