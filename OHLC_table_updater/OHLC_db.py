@@ -33,7 +33,7 @@ class OHLC_DB:
         table = self.db_connection.cursor.fetchall()
         return table
 
-    def return_all_asset_URLs(self):
+    def return_all_asset_dicts(self):
         # querry all assets from DB
         query =  f"""
             SELECT * from DummyData.assets
@@ -70,6 +70,14 @@ class OHLC_DB:
             CREATE TEMPORARY TABLE temporary_new_OHLC LIKE OHLC
         """
         self.db_connection.cursor.execute(create_Temp_table_sql)
+        self.db_connection.connection.commit()
+
+    def insert_first_and_last_date_into_assets_table(self, first_date, last_date):
+        update_first_and_last_dates_sql = f"""
+            `first_available_datapoint`{first_date}
+            `last_available_datapoint`{last_date}
+        """
+        self.db_connection.cursor.execute(update_first_and_last_dates_sql)
         self.db_connection.connection.commit()
 
     def insert_into_temp_table(self,OHLC_Data_Set):
