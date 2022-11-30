@@ -91,21 +91,21 @@ class update_asset_table:
         # self.db_connection.connection.commit()
         
         # create temp table to hold all new data 
-        self.db_connection.cursor.execute("CREATE TABLE IF NOT EXISTS new_urls LIKE assets")
+        self.db_connection.cursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS newly_fetched_assets LIKE assets")
         self.db_connection.connection.commit()
         # no clue what that does
-        self.db_connection.cursor.execute("DELETE FROM new_urls")
+        self.db_connection.cursor.execute("DELETE FROM newly_fetched_assets")
         # WHERE data_provider IS NOT NULL
         self.db_connection.connection.commit()
         
-        insert_sql = "INSERT INTO new_urls (data_provider, ticker, historical_data_url, live_data_url) VALUES (%s,%s,%s,%s)"
+        insert_sql = "INSERT INTO newly_fetched_assets (data_provider, ticker, historical_data_url, live_data_url) VALUES (%s,%s,%s,%s)"
         self.db_connection.cursor.executemany(insert_sql, self.data_set[:])
         self.db_connection.connection.commit()
 
         # get_number_of_delisted_assets_sql = f"""
         #     select count(*) from assets
-        #     left join new_urls on new_urls.data_provider = assets.data_provider and new_urls.ticker = assets.ticker
-        #     where assets.data_provider = '{self.data_provider}' and new_urls.data_provider is null                
+        #     left join newly_fetched_assets on newly_fetched_assets.data_provider = assets.data_provider and newly_fetched_assets.ticker = assets.ticker
+        #     where assets.data_provider = '{self.data_provider}' and newly_fetched_assets.data_provider is null                
         # """
         # self.db_connection.cursor.execute(get_number_of_delisted_assets_sql)
         # number_of_delisted_assets = self.db_connection.cursor.fetchall()
@@ -113,16 +113,16 @@ class update_asset_table:
         # check if the assets table has records that are not in the temp table
         remove_delisted_assets_sql = f"""
             DELETE assets from assets
-            left join new_urls on new_urls.data_provider = assets.data_provider and new_urls.ticker = assets.ticker
-            where assets.data_provider = '{self.data_provider}' and new_urls.data_provider is null                
+            left join newly_fetched_assets on newly_fetched_assets.data_provider = assets.data_provider and newly_fetched_assets.ticker = assets.ticker
+            where assets.data_provider = '{self.data_provider}' and newly_fetched_assets.data_provider is null                
         """
         self.db_connection.cursor.execute(remove_delisted_assets_sql)
         self.db_connection.connection.commit()
 
         # get_number_of_newly_listed_assets_sql = f"""
-        #     select count(*) from new_urls
-        #     left join binance_assets on new_urls.ticker = binance_assets.ticker
-        #     where binance_assets.live_data_url <> new_urls.live_data_url 
+        #     select count(*) from newly_fetched_assets
+        #     left join binance_assets on newly_fetched_assets.ticker = binance_assets.ticker
+        #     where binance_assets.live_data_url <> newly_fetched_assets.live_data_url 
         #         or binance_assets.id is null;
         # """
         # self.db_connection.cursor.execute(get_number_of_newly_listed_assets_sql)
@@ -130,9 +130,9 @@ class update_asset_table:
 
         add_newly_listed_assets_sql = f"""
             insert into assets
-                select new_urls.* from new_urls
-                left join assets on new_urls.data_provider = assets.data_provider and new_urls.ticker = assets.ticker
-                where new_urls.data_provider = '{self.data_provider}' and assets.ticker is null;
+                select newly_fetched_assets.* from newly_fetched_assets
+                left join assets on newly_fetched_assets.data_provider = assets.data_provider and newly_fetched_assets.ticker = assets.ticker
+                where newly_fetched_assets.data_provider = '{self.data_provider}' and assets.ticker is null;
         """
         self.db_connection.cursor.execute(add_newly_listed_assets_sql)
         self.db_connection.connection.commit()
