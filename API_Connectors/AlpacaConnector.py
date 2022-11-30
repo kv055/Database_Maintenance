@@ -21,8 +21,6 @@ class Alpaca:
         )
 
     def get_assets(self):
-        # return self.instance.list_assets()
-        
         # def list_tradable_assets(self) -> Assets:
         # """Get a list of assets"""
         # params = {
@@ -35,8 +33,12 @@ class Alpaca:
         # else:
         #     return [self.response_wrapper(o, Asset) for o in resp]
 
-        all_tradable_assets = self.instance.list_tradable_assets()
-        return all_tradable_assets
+        # all_tradable_assets = self.instance.list_tradable_assets()
+        
+        raw_assets = self.instance.list_assets()
+        assets = [asset for asset in raw_assets if asset['status'] != 'inactive' and asset['tradable']]
+
+        return assets
         
     def get_OHLC(self,asset, timeframe):
         
