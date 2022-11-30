@@ -27,6 +27,7 @@ class update_OHLC_table:
                 Formated_OHLC_Data_Set = Pricedata.OHLC_Price_List_for_DB(asset, self.timeframe)
                 # Get First and last date of the dataset
                 self.ohlc_tables.insert_first_and_last_date_into_assets_table(
+                    asset,
                     Formated_OHLC_Data_Set[0][0],
                     Formated_OHLC_Data_Set[-1][0]
                 )
