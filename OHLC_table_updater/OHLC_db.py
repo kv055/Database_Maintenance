@@ -102,16 +102,16 @@ class OHLC_DB:
 
     def insert_into_OHLC_table(self):
         # Compare entries with left/right joins
-        count_sql = f"""
-            select * from temporary_new_OHLC
-            left join OHLC 
-                ON temporary_new_OHLC.Date = OHLC.Date
-                AND temporary_new_OHLC.Data_Provider = OHLC.Data_Provider
-                AND temporary_new_OHLC.Ticker = OHLC.Ticker
-            where OHLC.Date is null
-        """
-        self.db_connection.cursor.execute(count_sql)
-        new_rows = self.db_connection.cursor.fetchall()
+        # count_sql = f"""
+        #     select * from temporary_new_OHLC
+        #     left join OHLC 
+        #         ON temporary_new_OHLC.Date = OHLC.Date
+        #         AND temporary_new_OHLC.Data_Provider = OHLC.Data_Provider
+        #         AND temporary_new_OHLC.Ticker = OHLC.Ticker
+        #     where OHLC.Date is null
+        # """
+        # self.db_connection.cursor.execute(count_sql)
+        # new_rows = self.db_connection.cursor.fetchall()
 
         join_sql = f"""
             insert into OHLC
