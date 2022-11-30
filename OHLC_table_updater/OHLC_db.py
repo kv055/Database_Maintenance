@@ -7,12 +7,13 @@ from API_Connectors.aws_sql_connect import SQL_Server
 
 class OHLC_DB:
     def __init__(self):
-        self.db_connection = SQL_Server('DummyData')
+        self.db_name = 'DummyData'
+        self.db_connection = SQL_Server(self.db_name)
         self.create_all_OHLC_tables()
 
     def return_all_data_providers(self):
         query_all_data_providers_sql =  f"""
-            SELECT DISTINCT data_provider from DummyData.assets
+            SELECT DISTINCT data_provider from {self.db_name}.assets
         """
         self.db_connection.cursor.execute(query_all_data_providers_sql)
         table = self.db_connection.cursor.fetchall()
@@ -26,7 +27,7 @@ class OHLC_DB:
     def return_all_asset_URLs_from_dataprovider(self,dataprovider):
         # querry all assets from DB
         query =  f"""
-            SELECT * from DummyData.assets
+            SELECT * from {self.db_name}.assets
             WHERE assets.data_provider = '{dataprovider}'
         """
         self.db_connection.cursor.execute(query)
@@ -36,7 +37,7 @@ class OHLC_DB:
     def return_all_asset_dicts(self):
         # querry all assets from DB
         query =  f"""
-            SELECT * from DummyData.assets
+            SELECT * from {self.db_name}.assets
         """
         self.db_connection.cursor.execute(query)
         table = self.db_connection.cursor.fetchall()
@@ -60,11 +61,11 @@ class OHLC_DB:
         self.db_connection.cursor.execute(create_OHLC_table)
         self.db_connection.connection.commit()
 
-        create_Temp_table_sql = f"""
-            CREATE TABLE IF NOT EXISTS new_ohlc_temp_table LIKE OHLC
-        """
-        self.db_connection.cursor.execute(create_Temp_table_sql)
-        self.db_connection.connection.commit()
+        # create_Temp_table_sql = f"""
+        #     CREATE TABLE IF NOT EXISTS temporary_new_OHLC LIKE OHLC
+        # """
+        # self.db_connection.cursor.execute(create_Temp_table_sql)
+        # self.db_connection.connection.commit()
 
         create_Temp_table_sql = f"""
             CREATE TEMPORARY TABLE temporary_new_OHLC LIKE OHLC
@@ -72,10 +73,12 @@ class OHLC_DB:
         self.db_connection.cursor.execute(create_Temp_table_sql)
         self.db_connection.connection.commit()
 
-    def insert_first_and_last_date_into_assets_table(self, first_date, last_date):
+    def insert_first_and_last_date_into_assets_table(self, asset, first_date, last_date):
         update_first_and_last_dates_sql = f"""
-            `first_available_datapoint`{first_date}
-            `last_available_datapoint`{last_date}
+            UPDATE {self.db_name}.assets 
+            SET first_available_datapoint = {first_date}, 
+                last_available_datapoint = {last_date} 
+            WHERE data_provider = '{asset['data_provider']}' and ticker = '{asset['ticker']}';
         """
         self.db_connection.cursor.execute(update_first_and_last_dates_sql)
         self.db_connection.connection.commit()
@@ -90,21 +93,21 @@ class OHLC_DB:
         # self.db_connection.connection.commit()
         
         # delete old Data_set
-        self.db_connection.cursor.execute("DELETE FROM new_ohlc_temp_table")
+        self.db_connection.cursor.execute("DELETE FROM temporary_new_OHLC")
         self.db_connection.connection.commit()
         # insert it into the temp rable
-        insert_sql = f"INSERT INTO new_ohlc_temp_table (Date, Open, High, Low, Close, Average, Ticker, Data_Provider, Time_Frame) VALUES (FROM_UNIXTIME(%s),%s,%s,%s,%s,%s,%s,%s,%s)"
+        insert_sql = f"INSERT INTO temporary_new_OHLC (Date, Open, High, Low, Close, Average, Ticker, Data_Provider, Time_Frame) VALUES (FROM_UNIXTIME(%s),%s,%s,%s,%s,%s,%s,%s,%s)"
         self.db_connection.cursor.executemany(insert_sql, OHLC_Data_Set)
         self.db_connection.connection.commit()
 
     def insert_into_OHLC_table(self):
         # Compare entries with left/right joins
         count_sql = f"""
-            select * from new_ohlc_temp_table
+            select * from temporary_new_OHLC
             left join OHLC 
-                ON new_ohlc_temp_table.Date = OHLC.Date
-                AND new_ohlc_temp_table.Data_Provider = OHLC.Data_Provider
-                AND new_ohlc_temp_table.Ticker = OHLC.Ticker
+                ON temporary_new_OHLC.Date = OHLC.Date
+                AND temporary_new_OHLC.Data_Provider = OHLC.Data_Provider
+                AND temporary_new_OHLC.Ticker = OHLC.Ticker
             where OHLC.Date is null
         """
         self.db_connection.cursor.execute(count_sql)
@@ -112,11 +115,11 @@ class OHLC_DB:
 
         join_sql = f"""
             insert into OHLC
-                select new_ohlc_temp_table.* from new_ohlc_temp_table
+                select temporary_new_OHLC.* from temporary_new_OHLC
                     left join OHLC 
-                        on new_ohlc_temp_table.Date = OHLC.Date
-                        AND new_ohlc_temp_table.Data_Provider = OHLC.Data_Provider
-                        AND new_ohlc_temp_table.Ticker = OHLC.Ticker
+                        on temporary_new_OHLC.Date = OHLC.Date
+                        AND temporary_new_OHLC.Data_Provider = OHLC.Data_Provider
+                        AND temporary_new_OHLC.Ticker = OHLC.Ticker
                     where OHLC.Date is null
         """
         self.db_connection.cursor.execute(join_sql)
