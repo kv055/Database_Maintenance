@@ -86,16 +86,13 @@ class update_asset_table:
         self.data_provider = 'Kraken'
 
     def enter_into_db(self):
-        # # create temp table to hold all new data 
-        # self.db_connection.cursor.execute("CREATE TEMPORARY TABLE temporary_new_assets LIKE assets")
-        # self.db_connection.connection.commit()
-        
+      
         # create temp table to hold all new data 
         self.db_connection.cursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS newly_fetched_assets LIKE assets")
         self.db_connection.connection.commit()
+        
         # no clue what that does
         self.db_connection.cursor.execute("DELETE FROM newly_fetched_assets")
-        # WHERE data_provider IS NOT NULL
         self.db_connection.connection.commit()
         
         insert_sql = "INSERT INTO newly_fetched_assets (data_provider, ticker, historical_data_url, live_data_url) VALUES (%s,%s,%s,%s)"
