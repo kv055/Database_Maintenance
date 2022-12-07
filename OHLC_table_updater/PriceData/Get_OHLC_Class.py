@@ -100,7 +100,7 @@ class Import_OHLC_Data:
             close = float(element[4])
             
             # calculate average Price
-            average = self.Average_Price(open,high,low,close)
+            average = float(self.Average_Price(open,high,low,close))
 
             self.OHLC_list.append((
                 element[0], 
