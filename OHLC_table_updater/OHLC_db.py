@@ -73,14 +73,22 @@ class OHLC_DB:
         self.db_connection.cursor.execute(create_Temp_table_sql)
         self.db_connection.connection.commit()
 
-    def insert_first_and_last_date_into_assets_table(self, asset, first_date, last_date):
+    def insert_first_and_last_date_into_assets_table(self, asset_dict, first_date, last_date):
         update_first_and_last_dates_sql = f"""
             UPDATE {self.db_name}.assets 
             SET first_available_datapoint = {first_date}, 
                 last_available_datapoint = {last_date} 
-            WHERE data_provider = '{asset['data_provider']}' and ticker = '{asset['ticker']}';
+            WHERE data_provider = '{asset_dict['data_provider']}' and ticker = '{asset_dict['ticker']}';
         """
         self.db_connection.cursor.execute(update_first_and_last_dates_sql)
+        self.db_connection.connection.commit()
+
+    def delete_row_by_data_provider_and_ticker(self, asset_dict):
+        delete_row_by_provider_and_ticker_sql = f"""
+            DELETE FROM {self.db_name}.assets 
+            WHERE data_provider = '{asset_dict['data_provider']}' and ticker = '{asset_dict['ticker']};
+        """
+        self.db_connection.cursor.execute(delete_row_by_provider_and_ticker_sql)
         self.db_connection.connection.commit()
 
     def insert_into_temp_table(self,OHLC_Data_Set):
