@@ -37,5 +37,9 @@ class update_OHLC_table:
                     self.ohlc_tables.insert_into_OHLC_table()
                     print('Inserted',asset['data_provider'],asset['ticker'],index)
                 else:
-                    print('could not fetch ohlc for selected asset: ',asset['data_provider'],asset['ticker'])
+                    # delete the asset from the assets Table
+                    self.ohlc_tables.delete_row_by_data_provider_and_ticker(
+                        asset
+                    )
+                    print('could not fetch for now deleted selected asset: ',asset['data_provider'],asset['ticker'])
 
