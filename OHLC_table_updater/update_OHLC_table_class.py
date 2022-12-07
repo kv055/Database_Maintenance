@@ -25,15 +25,17 @@ class update_OHLC_table:
             for index,asset in enumerate(self.all_asset_dicts):
                 # Fetch the Price Data Sets from external API's
                 Formated_OHLC_Data_Set = Pricedata.OHLC_Price_List_for_DB(asset, self.timeframe)
-                # Get First and last date of the dataset
-                self.ohlc_tables.insert_first_and_last_date_into_assets_table(
-                    asset,
-                    Formated_OHLC_Data_Set[0][0],
-                    Formated_OHLC_Data_Set[-1][0]
-                )
-                self.ohlc_tables.insert_into_temp_table(Formated_OHLC_Data_Set)
-                # Join on TimeStamp
-                self.ohlc_tables.insert_into_OHLC_table()
-                print('Inserted',asset['data_provider'],asset['ticker'],index)
-
+                if len(Formated_OHLC_Data_Set)>0:
+                    # Get First and last date of the dataset
+                    self.ohlc_tables.insert_first_and_last_date_into_assets_table(
+                        asset,
+                        Formated_OHLC_Data_Set[0][0],
+                        Formated_OHLC_Data_Set[-1][0]
+                    )
+                    self.ohlc_tables.insert_into_temp_table(Formated_OHLC_Data_Set)
+                    # Join on TimeStamp
+                    self.ohlc_tables.insert_into_OHLC_table()
+                    print('Inserted',asset['data_provider'],asset['ticker'],index)
+                else:
+                    print('could not fetch ohlc for selected asset: ',asset['data_provider'],asset['ticker'])
 
