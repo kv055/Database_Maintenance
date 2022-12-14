@@ -1,7 +1,7 @@
 # sketch of the final execusion script
 
 from Assets_table_updater.update_asset_table_class import update_asset_table
-from OHLC_table_updater.update_OHLC_table_class import update_OHLC_table
+from OHLC_table_updater.Async_update_OHLC import update_OHLC_table
 
 asset_table = update_asset_table()
 asset_table.set_Alpaca_URL_List()
