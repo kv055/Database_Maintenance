@@ -8,6 +8,7 @@ from API_Connectors.aws_sql_connect import SQL_Server
 class OHLC_DB:
     def __init__(self):
         self.db_name = 'DummyData'
+        # self.db_name = 'Financial_Data'
         self.db_connection = SQL_Server(self.db_name)
         self.create_all_OHLC_tables()
 
