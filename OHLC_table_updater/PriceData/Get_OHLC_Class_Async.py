@@ -52,10 +52,10 @@ class Import_OHLC_Data_Async:
                             candle[0] = new_time_stamp
 
                         unformated_price_data = {
-                            'OHLC': answer,
                             'data_provider': asset_dict['data_provider'],
                             'ticker': asset_dict['ticker'],
                             # 'timeframe': asset_dict['timeframe']
+                            'OHLC_unformated': answer
                         }
                         
                         self.all_OHLC_data.append(unformated_price_data)
@@ -67,7 +67,7 @@ class Import_OHLC_Data_Async:
                         tasks = [fetch_Binance_url(asset_dict,index, session) for index,asset_dict in enumerate(provider['asset_dicts'])]
                         await asyncio.gather(*tasks)
 
-                    asyncio.run(main())
+                asyncio.run(main())
                
             if provider['data_provider'] == 'Kraken':
                 
@@ -76,10 +76,10 @@ class Import_OHLC_Data_Async:
                         answer = await response.text()
                         json = loads(answer)
                         unformated_price_data = {
-                            'OHLC': json['result'][asset_dict['ticker']],
                             'data_provider': asset_dict['data_provider'],
                             'ticker': asset_dict['ticker'],
                             # 'timeframe': asset_dict['timeframe']
+                            'OHLC_unformated': json['result'][asset_dict['ticker']]
                         }
                         self.all_OHLC_data.append(unformated_price_data)
                         print('Kraken',index)
@@ -96,12 +96,11 @@ class Import_OHLC_Data_Async:
         # Get Asset Config Object
         self.get_historical_OHLC()
 
-        self.formated_OHLC_data = []
         # Formate the Price Data List
         # Include Ticker and DataProvider 
         for asset in self.all_OHLC_data:
-            OHLC_list = []
-            for candle in asset['OHLC']:
+            asset['OHLC'] = []
+            for candle in asset['OHLC_unformated']:
                 open = float(candle[1])
                 high = float(candle[2])
                 low = float(candle[3])
@@ -110,7 +109,7 @@ class Import_OHLC_Data_Async:
                 # calculate average Price
                 average = float(self.Average_Price(open,high,low,close))
 
-                OHLC_list.append((
+                asset['OHLC'].append((
                     candle[0], 
                     open, 
                     high, 
@@ -119,12 +118,10 @@ class Import_OHLC_Data_Async:
                     average,
                     asset['ticker'],
                     asset['data_provider'],
-                    # asset['timeframe']
+                    self.fetch_config['Candle_Size']
                 ))
-            
-            self.formated_OHLC_data.append(OHLC_list)
-            
-        return self.formated_OHLC_data
+
+        return self.all_OHLC_data
 
     def Average_Price(self,open,high,low,close):
         add_all = open+high+low+close
