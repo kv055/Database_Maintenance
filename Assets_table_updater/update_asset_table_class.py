@@ -110,7 +110,7 @@ class update_asset_table:
 
         # check if the assets table has records that are not in the temp table
         remove_delisted_assets_sql = f"""
-            DELETE assets from Assets
+            DELETE Assets from Assets
             left join newly_fetched_assets on newly_fetched_assets.data_provider = Assets.data_provider and newly_fetched_assets.ticker = Assets.ticker
             where Assets.data_provider = '{self.data_provider}' and newly_fetched_assets.data_provider is null                
         """
