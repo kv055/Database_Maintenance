@@ -16,7 +16,7 @@ class update_asset_table:
         self.db_connection = SQL_Server(self.db_name)
         # Create Assets Table if it doesnts exist
         create_assets_table_sql = f"""
-            CREATE TABLE IF NOT EXISTS {self.db_name}.`assets` (
+            CREATE TABLE IF NOT EXISTS {self.db_name}.`Assets` (
             `data_provider` varchar(255) NOT NULL,
             `ticker` varchar(45) NOT NULL,
             `historical_data_url` varchar(255) DEFAULT NULL,
@@ -39,7 +39,7 @@ class update_asset_table:
 
         # Delete id column if table exists
         delete_id_column_sql = f"""
-            ALTER TABLE {self.db_name}.`assets` 
+            ALTER TABLE {self.db_name}.`Assets` 
             DROP COLUMN `id`,
             DROP INDEX `id_UNIQUE` ;
             ;
@@ -89,7 +89,7 @@ class update_asset_table:
     def enter_into_db(self):
       
         # create temp table to hold all new data 
-        self.db_connection.cursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS newly_fetched_assets LIKE assets")
+        self.db_connection.cursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS newly_fetched_assets LIKE Assets")
         self.db_connection.connection.commit()
         
         # no clue what that does
@@ -110,9 +110,9 @@ class update_asset_table:
 
         # check if the assets table has records that are not in the temp table
         remove_delisted_assets_sql = f"""
-            DELETE assets from assets
-            left join newly_fetched_assets on newly_fetched_assets.data_provider = assets.data_provider and newly_fetched_assets.ticker = assets.ticker
-            where assets.data_provider = '{self.data_provider}' and newly_fetched_assets.data_provider is null                
+            DELETE assets from Assets
+            left join newly_fetched_assets on newly_fetched_assets.data_provider = Assets.data_provider and newly_fetched_assets.ticker = Assets.ticker
+            where Assets.data_provider = '{self.data_provider}' and newly_fetched_assets.data_provider is null                
         """
         self.db_connection.cursor.execute(remove_delisted_assets_sql)
         self.db_connection.connection.commit()
@@ -127,10 +127,10 @@ class update_asset_table:
         # number_of_newly_listed_assets = self.db_connection.cursor.fetchall()
 
         add_newly_listed_assets_sql = f"""
-            insert into {self.db_name}.assets
+            insert into {self.db_name}.Assets
                 select newly_fetched_assets.* from newly_fetched_assets
-                left join assets on newly_fetched_assets.data_provider = assets.data_provider and newly_fetched_assets.ticker = assets.ticker
-                where newly_fetched_assets.data_provider = '{self.data_provider}' and assets.ticker is null;
+                left join Assets on newly_fetched_assets.data_provider = Assets.data_provider and newly_fetched_assets.ticker = Assets.ticker
+                where newly_fetched_assets.data_provider = '{self.data_provider}' and Assets.ticker is null;
         """
         self.db_connection.cursor.execute(add_newly_listed_assets_sql)
         self.db_connection.connection.commit()
@@ -138,7 +138,7 @@ class update_asset_table:
         print(f'Inserted all assets from {self.data_provider}')
 
     def create_ID_column(self):
-        create_id_column_sql = f"""ALTER TABLE {self.db_name}.`assets` 
+        create_id_column_sql = f"""ALTER TABLE {self.db_name}.`Assets` 
             ADD COLUMN `id` INT NOT NULL AUTO_INCREMENT AFTER `live_data_req_body`,
             ADD UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE;
         ;"""
