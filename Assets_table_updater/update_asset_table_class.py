@@ -12,10 +12,11 @@ class update_asset_table:
     """
     def __init__(self):
         # establish connection to the Dummy Data DB
-        self.db_connection = SQL_Server('DummyData')
+        self.db_name = 'Financial_Data'
+        self.db_connection = SQL_Server(self.db_name)
         # Create Assets Table if it doesnts exist
         create_assets_table_sql = f"""
-            CREATE TABLE IF NOT EXISTS `assets` (
+            CREATE TABLE IF NOT EXISTS {self.db_name}.`assets` (
             `data_provider` varchar(255) NOT NULL,
             `ticker` varchar(45) NOT NULL,
             `historical_data_url` varchar(255) DEFAULT NULL,
@@ -38,7 +39,7 @@ class update_asset_table:
 
         # Delete id column if table exists
         delete_id_column_sql = f"""
-            ALTER TABLE `DummyData`.`assets` 
+            ALTER TABLE {self.db_name}.`assets` 
             DROP COLUMN `id`,
             DROP INDEX `id_UNIQUE` ;
             ;
@@ -126,7 +127,7 @@ class update_asset_table:
         # number_of_newly_listed_assets = self.db_connection.cursor.fetchall()
 
         add_newly_listed_assets_sql = f"""
-            insert into assets
+            insert into {self.db_name}.assets
                 select newly_fetched_assets.* from newly_fetched_assets
                 left join assets on newly_fetched_assets.data_provider = assets.data_provider and newly_fetched_assets.ticker = assets.ticker
                 where newly_fetched_assets.data_provider = '{self.data_provider}' and assets.ticker is null;
@@ -137,7 +138,7 @@ class update_asset_table:
         print(f'Inserted all assets from {self.data_provider}')
 
     def create_ID_column(self):
-        create_id_column_sql = f"""ALTER TABLE `DummyData`.`assets` 
+        create_id_column_sql = f"""ALTER TABLE {self.db_name}.`assets` 
             ADD COLUMN `id` INT NOT NULL AUTO_INCREMENT AFTER `live_data_req_body`,
             ADD UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE;
         ;"""
