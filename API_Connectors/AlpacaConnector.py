@@ -1,4 +1,5 @@
 import os
+import asyncio
 from datetime import datetime
 
 import alpaca_trade_api as tradeapi
@@ -40,7 +41,7 @@ class Alpaca:
 
         return assets
         
-    def get_OHLC(self,asset, timeframe):
+    async def get_OHLC(self,asset, timeframe):
         
         Barset = self.instance.get_bars(
             asset,
