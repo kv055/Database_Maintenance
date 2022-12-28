@@ -2,6 +2,8 @@ import asyncio
 import aiohttp
 from datetime import datetime
 from json import loads
+import time
+
 import find_parent
 from API_Connectors.AlpacaConnector import Alpaca
 from OHLC_table_updater.PriceData.Request_URL_Generators import generate_request
@@ -47,7 +49,7 @@ class Import_OHLC_Data_Async:
                     }
 
                     self.all_OHLC_data.append(unformated_price_data)
-                    print('Alpaca',index)
+                    print('fetch Alpaca',index)
                     return unformated_price_data
 
                 async def main():
@@ -59,9 +61,18 @@ class Import_OHLC_Data_Async:
             if provider['data_provider'] == 'Binance':
                 
                 async def fetch_Binance_url(asset_dict, index, session):
+                    
                     async with session.get(f"""{asset_dict['historical_data_url']}1d""") as response:
+                        # Timelock to not trigger the APIs rate limit of 1000 requests per minute
+                        if index > 0 and 1000 / index == 1:
+                            print('stopping requests for 2min to not trigger rate Limiter')
+                            time.sleep(120)
+                        
+                        # Fetch and convert OHLC
                         answer = await response.text()
                         json = loads(answer)
+                        
+                        # Formate Timestamp from Binance to UNIX-Timestamp
                         for candle in json:
                             new_time_stamp = round(candle[0] / 1000)
                             candle[0] = new_time_stamp
@@ -70,11 +81,11 @@ class Import_OHLC_Data_Async:
                             'data_provider': asset_dict['data_provider'],
                             'ticker': asset_dict['ticker'],
                             # 'timeframe': asset_dict['timeframe']
-                            'OHLC_unformated': answer
+                            'OHLC_unformated': json
                         }
-                        
                         self.all_OHLC_data.append(unformated_price_data)
-                        print('Binance',index)
+                        
+                        print('fetch Binance',index)
                         return unformated_price_data
 
                 async def main():
@@ -90,6 +101,7 @@ class Import_OHLC_Data_Async:
                     async with session.get(f"""{asset_dict['historical_data_url']}1440""") as response:
                         answer = await response.text()
                         json = loads(answer)
+                        
                         unformated_price_data = {
                             'data_provider': asset_dict['data_provider'],
                             'ticker': asset_dict['ticker'],
@@ -97,7 +109,8 @@ class Import_OHLC_Data_Async:
                             'OHLC_unformated': json['result'][asset_dict['ticker']]
                         }
                         self.all_OHLC_data.append(unformated_price_data)
-                        print('Kraken',index)
+                        
+                        print('fetch Kraken',index)
                         return unformated_price_data
                 
                 async def main():
@@ -142,19 +155,3 @@ class Import_OHLC_Data_Async:
         add_all = open+high+low+close
         average = add_all/4
         return average
-
-
-
-                # ohlc_in_alpaca_raw_format = self.Alpaca_API.get_OHLC(asset['ticker'],'1Day')
-                # self.unformated_dataset = []
-                # for Bar_dict in ohlc_in_alpaca_raw_format:
-                #     date_as_string = Bar_dict['t'].replace('Z','')
-                #     date_object = datetime.strptime(date_as_string, '%Y-%m-%dT%H:%M:%S')
-                #     date = date_object.timestamp()
-                #     open = Bar_dict['o']
-                #     high = Bar_dict['h']
-                #     low = Bar_dict['l']
-                #     close = Bar_dict['c']
-                #     self.unformated_dataset.append(
-                #         [date,open,high,low,close]
-                #     )
