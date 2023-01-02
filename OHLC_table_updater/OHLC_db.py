@@ -13,7 +13,7 @@ class OHLC_DB:
 
     def return_all_data_providers(self):
         query_all_data_providers_sql =  f"""
-            SELECT DISTINCT data_provider from {self.db_name}.assets
+            SELECT DISTINCT data_provider from {self.db_name}.Assets
         """
         self.db_connection.cursor.execute(query_all_data_providers_sql)
         table = self.db_connection.cursor.fetchall()
@@ -22,7 +22,7 @@ class OHLC_DB:
     def return_all_asset_dicts_from_dataprovider(self,dataprovider):
         # querry all assets from DB
         query =  f"""
-            SELECT * from {self.db_name}.assets
+            SELECT * from {self.db_name}.Assets
             WHERE data_provider = '{dataprovider}'
         """
         self.db_connection.cursor.execute(query)
@@ -32,7 +32,7 @@ class OHLC_DB:
     def return_all_asset_dicts(self):
         # querry all assets from DB
         query =  f"""
-            SELECT * from {self.db_name}.assets
+            SELECT * from {self.db_name}.Assets
         """
         self.db_connection.cursor.execute(query)
         table = self.db_connection.cursor.fetchall()
@@ -70,7 +70,7 @@ class OHLC_DB:
 
     def insert_first_and_last_date_into_assets_table(self, asset_dict, first_date, last_date):
         update_first_and_last_dates_sql = f"""
-            UPDATE {self.db_name}.assets 
+            UPDATE {self.db_name}.Assets 
             SET first_available_datapoint = {first_date}, 
                 last_available_datapoint = {last_date} 
             WHERE data_provider = '{asset_dict['data_provider']}' and ticker = '{asset_dict['ticker']}';
@@ -80,7 +80,7 @@ class OHLC_DB:
 
     def delete_row_by_data_provider_and_ticker(self, asset_dict):
         delete_row_by_provider_and_ticker_sql = f"""
-            DELETE FROM {self.db_name}.assets 
+            DELETE FROM {self.db_name}.Assets 
             WHERE data_provider = '{asset_dict['data_provider']}' and ticker = '{asset_dict['ticker']}';
         """
         self.db_connection.cursor.execute(delete_row_by_provider_and_ticker_sql)
