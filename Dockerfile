@@ -1,8 +1,8 @@
-FROM ubuntu
-RUN apt update -y && apt upgrade -y
-RUN apt install python3.8 python3-pip -y
+FROM python3.8
+
 WORKDIR /AbelianDatabaseMaintenance
-COPY . /AbelianDatabaseMaintenance
+COPY . .
 RUN pip install -r req.txt
+
 CMD ["python3","App.py"]
 
