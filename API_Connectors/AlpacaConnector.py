@@ -37,7 +37,7 @@ class Alpaca:
         # all_tradable_assets = self.instance.list_tradable_assets()
         
         raw_assets = self.instance.list_assets()
-        assets = [asset for asset in raw_assets if asset['status'] != 'inactive' and asset['tradable']]
+        assets = [asset for asset in raw_assets if asset.status != 'inactive' and asset.tradable]
 
         return assets
         
