@@ -87,12 +87,13 @@ class all_listed_assets:
 
     def all_links_Alpaca(self):
         # filter out all crypto assets
-        alpaca_assets = [asset for asset in self.Alpaca_assets_raw if asset['class'] != 'crypto']
+        alpaca_assets = [asset.__dict__ for asset in self.Alpaca_assets_raw if asset._raw['class'] != 'crypto']
+        
 
         Alpaca_tickers = []
 
         for asset in alpaca_assets:
-            Alpaca_tickers.append(asset['symbol'])
+            Alpaca_tickers.append(asset['_raw']['symbol'])
 
         live_data_URIs = []
         ohlc_data_URIs = []
