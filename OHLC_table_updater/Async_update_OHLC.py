@@ -7,7 +7,7 @@ class update_OHLC_table:
     def __init__(self):
         # # Get all listed Asset URL's from DB
         self.ohlc_tables = OHLC_DB()
-        self.all_data_providers = self.ohlc_tables.return_all_data_providers()
+        self.all_data_providers = self.ohlc_tables.fetch_distinct_data_providers()
         
         self.all_configs = []
         self.all_asset_dicts = []
@@ -33,9 +33,9 @@ class update_OHLC_table:
         # })
 
         for provider in self.all_data_providers:
-            dicts = self.ohlc_tables.return_all_asset_dicts_from_dataprovider(provider['data_provider'])
+            dicts = self.ohlc_tables.fetch_assets_by_provider(provider)
             self.all_asset_dicts.append({
-                'data_provider': provider['data_provider'],
+                'data_provider': provider,
                 'asset_dicts': dicts
             })
 

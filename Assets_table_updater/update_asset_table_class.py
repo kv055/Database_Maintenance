@@ -1,7 +1,8 @@
-import find_parent
-from API_Connectors.aws_sql_connect import SQL_Server
 from Assets_table_updater.get_all_asset_urls_from_API import all_listed_assets
+from sqlalchemy import Column, Float, Table
+from sqlalchemy.sql import delete, insert, select
 
+from ORM_Models.ORM_Models_Module import FinancialData
 
 class update_asset_table:
     """
@@ -11,63 +12,19 @@ class update_asset_table:
          > right join temp & asset table = delete data
     """
     def __init__(self):
-        # establish connection to the Dummy Data DB
-        self.db_name = 'Financial_Data'
-        self.db_connection = SQL_Server(self.db_name)
+        # establish connection to the Financiaal Data DB
+        self.FinancialDataDb = FinancialData()
+        self.Assets_Table = self.FinancialDataDb.return_Assets_Table()
+        self.session = self.FinancialDataDb.session
+        self.engine = self.FinancialDataDb.engine
+        self.metadata = self.FinancialDataDb.metadata
         # Create Assets Table if it doesnts exist
-        create_assets_table_sql = f"""
-            CREATE TABLE IF NOT EXISTS {self.db_name}.`Assets` (
-            `data_provider` varchar(255) NOT NULL,
-            `ticker` varchar(45) NOT NULL,
-            `historical_data_url` varchar(255) DEFAULT NULL,
-            `historical_data_req_body` varchar(255) DEFAULT NULL,
-            `live_data_url` varchar(255) DEFAULT NULL,
-            `live_data_req_body` varchar(255) DEFAULT NULL,
-            `first_available_datapoint` DATETIME NOT NULL,
-            `last_available_datapoint` DATETIME NOT NULL,
-            PRIMARY KEY (`data_provider`,`ticker`)
-            )
-        """
-        self.db_connection.cursor.execute(create_assets_table_sql)
-        self.db_connection.connection.commit()
+        self.Assets_Table.create(checkfirst=True,bind=self.engine)
 
-        # LOGIC ERROR TO BE FIXED, BUT WORKS FOR NOW AS LONG AS THE assets TABLE
-        # DOESNT GET DELETED
-        # if create_assets_table_sql gets executed then there will be an error
-        # thrown once the delete_id_column_sql gets executed
-        # beacause the nonexistend id Column
-
-        # Delete id column if table exists
-        delete_id_column_sql = f"""
-            ALTER TABLE {self.db_name}.`Assets` 
-            DROP COLUMN `id`,
-            DROP INDEX `id_UNIQUE` ;
-            ;
-        """
-        self.db_connection.cursor.execute(delete_id_column_sql)
-        self.db_connection.connection.commit()
-        
-        # this statement would fix the above mentioned error but i
-        # cant figure out the correct syntax
-
-        # create_table_or_delete_id_column_sql_sql = f"""
-        #     IF NOT EXISTS(
-        #     CREATE TABLE `assets` (
-        #         `data_provider` varchar(255) NOT NULL,
-        #         `ticker` varchar(45) NOT NULL,
-        #         `historical_data_url` varchar(255) DEFAULT NULL,
-        #         `historical_data_req_body` varchar(255) DEFAULT NULL,
-        #         `live_data_url` varchar(255) DEFAULT NULL,
-        #         `live_data_req_body` varchar(255) DEFAULT NULL,
-        #         PRIMARY KEY (`data_provider`, `ticker`)
-        #     ) ELSE
-        #     ALTER TABLE `DummyData`.`assets` 
-        #         DROP COLUMN `id`,
-        #         DROP INDEX `id_UNIQUE`;
-        #     END IF;
-        # """
-        # self.db_connection.cursor.execute(create_table_or_delete_id_column_sql_sql)
-        # self.db_connection.connection.commit()
+        # Check if id column exists and drop it
+        if 'id' in self.Assets_Table.columns:
+            self.Assets_Table.c.id.drop()
+            self.Assets_Table.indexes.remove(self.Assets_Table.c.id_UNIQUE)
 
         assets_api_instance = all_listed_assets()
         self.Alpaca_URL_List = assets_api_instance.all_links_Alpaca
@@ -87,60 +44,49 @@ class update_asset_table:
         self.data_provider = 'Kraken'
 
     def enter_into_db(self):
-      
-        # create temp table to hold all new data 
-        self.db_connection.cursor.execute("CREATE TEMPORARY TABLE IF NOT EXISTS newly_fetched_assets LIKE Assets")
-        self.db_connection.connection.commit()
-        
-        # no clue what that does
-        self.db_connection.cursor.execute("DELETE FROM newly_fetched_assets")
-        self.db_connection.connection.commit()
-        
-        insert_sql = "INSERT INTO newly_fetched_assets (data_provider, ticker, historical_data_url, live_data_url) VALUES (%s,%s,%s,%s)"
-        self.db_connection.cursor.executemany(insert_sql, self.data_set[:])
-        self.db_connection.connection.commit()
 
-        # get_number_of_delisted_assets_sql = f"""
-        #     select count(*) from assets
-        #     left join newly_fetched_assets on newly_fetched_assets.data_provider = assets.data_provider and newly_fetched_assets.ticker = assets.ticker
-        #     where assets.data_provider = '{self.data_provider}' and newly_fetched_assets.data_provider is null                
-        # """
-        # self.db_connection.cursor.execute(get_number_of_delisted_assets_sql)
-        # number_of_delisted_assets = self.db_connection.cursor.fetchall()
+        # Reflect the schema of self.Assets_Table
+        self.metadata.reflect(bind=self.engine, schema='Financial_Data')
+        table_structure = self.Assets_Table.metadata.tables[self.Assets_Table.name]
 
-        # check if the assets table has records that are not in the temp table
-        remove_delisted_assets_sql = f"""
-            DELETE Assets from Assets
-            left join newly_fetched_assets on newly_fetched_assets.data_provider = Assets.data_provider and newly_fetched_assets.ticker = Assets.ticker
-            where Assets.data_provider = '{self.data_provider}' and newly_fetched_assets.data_provider is null                
-        """
-        self.db_connection.cursor.execute(remove_delisted_assets_sql)
-        self.db_connection.connection.commit()
+        # Specify the name for your temporary table
+        temp_table_name = 'Financial_Data'
 
-        # get_number_of_newly_listed_assets_sql = f"""
-        #     select count(*) from newly_fetched_assets
-        #     left join binance_assets on newly_fetched_assets.ticker = binance_assets.ticker
-        #     where binance_assets.live_data_url <> newly_fetched_assets.live_data_url 
-        #         or binance_assets.id is null;
-        # """
-        # self.db_connection.cursor.execute(get_number_of_newly_listed_assets_sql)
-        # number_of_newly_listed_assets = self.db_connection.cursor.fetchall()
+        # Create the temporary table using the reflected table structure
+        temp_assets_table = table_structure.tometadata(self.metadata, schema=temp_table_name)
 
-        add_newly_listed_assets_sql = f"""
-            insert into {self.db_name}.Assets
-                select newly_fetched_assets.* from newly_fetched_assets
-                left join Assets on newly_fetched_assets.data_provider = Assets.data_provider and newly_fetched_assets.ticker = Assets.ticker
-                where newly_fetched_assets.data_provider = '{self.data_provider}' and Assets.ticker is null;
-        """
-        self.db_connection.cursor.execute(add_newly_listed_assets_sql)
-        self.db_connection.connection.commit()
+        # Create the temporary table in the database
+        temp_assets_table.create(self.engine, checkfirst=True)
 
+        # Insert new data into the temporary table
+        insert_stmt = insert(temp_assets_table).values(
+            data_provider='da',
+            ticker='er',
+            historical_data_url='youhiica_data_url',
+            live_data_url='y_r'
+        )
+        self.session.execute(insert_stmt)
+        self.session.commit()
+
+           # Add newly listed assets to the main table
+        add_newly_listed_assets_stmt = (
+            insert(self.Assets_Table)
+            .from_select(
+                self.Assets_Table.columns.keys(),
+                select(temp_assets_table)
+                .join(self.Assets_Table, (temp_assets_table.c.data_provider == self.Assets_Table.c.data_provider) &
+                    (temp_assets_table.c.ticker == self.Assets_Table.c.ticker), isouter=True)
+                .where(temp_assets_table.c.data_provider == 'your_data_provider')
+                .where(self.Assets_Table.c.ticker.is_(None))
+            )
+        )
+        self.session.execute(add_newly_listed_assets_stmt)
+        self.session.commit()
         print(f'Inserted all assets from {self.data_provider}')
 
-    def create_ID_column(self):
-        create_id_column_sql = f"""ALTER TABLE {self.db_name}.`Assets` 
-            ADD COLUMN `id` INT NOT NULL AUTO_INCREMENT AFTER `live_data_req_body`,
-            ADD UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE;
-        ;"""
-        self.db_connection.cursor.execute(create_id_column_sql)
-        self.db_connection.connection.commit()
+    
+    def create_id_column(self):
+        # Create a new column in the OHLC table
+        new_column = Column('id', Float)
+        self.Assets_Table.add_column(new_column)
+        self.session.commit()

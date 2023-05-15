@@ -37,8 +37,10 @@ class SQL_Server:
         return session
     
     def get_metadata(self):
-        metadata = MetaData(bind=self.engine)
+        metadata = MetaData()
+        metadata.bind = self.engine
         return metadata
+
     
     def get_engine(self):
         return self.engine
