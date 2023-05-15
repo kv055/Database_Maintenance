@@ -26,8 +26,9 @@ class Import_OHLC_Data_Async:
             if provider['data_provider'] == 'Alpaca':
 
                 async def fetch_Alpaca_asset(asset_dict, index):
-                    print(f"""{asset_dict['ticker'],index}Test""")
-                    ohlc_in_alpaca_raw_format = await self.Alpaca_API.get_OHLC(asset_dict['ticker'],'1Day')
+                    print(f"""{asset_dict._data[1],index}Test""")
+
+                    ohlc_in_alpaca_raw_format = await self.Alpaca_API.get_OHLC(asset_dict._data[1],'1Day')
                     unformated_dataset = []
                     for Bar_dict in ohlc_in_alpaca_raw_format:
                         date_as_string = Bar_dict['t'].replace('Z','')
