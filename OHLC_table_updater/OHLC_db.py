@@ -141,12 +141,14 @@ class OHLC_DB:
         self.FinancialDataDb = FinancialData()
         self.session = self.FinancialDataDb.session
         self.engine = self.FinancialDataDb.engine
+        self.metadata = self.FinancialDataDb.metadata
         self.Assets_Table = self.FinancialDataDb.return_Assets_Table()
         self.OHLC_Table = self.FinancialDataDb.return_OHLC_Table()
-        l = 0
+        self.create_OHLC_tables()
+
 
     def fetch_distinct_data_providers(self):
-        
+        # TO do fix this issue that only Kraken gets returned
         distinct_data_providers = (
             self.session
             .query(distinct(self.Assets_Table.c.data_provider))
@@ -163,15 +165,15 @@ class OHLC_DB:
             .all()
         )
         # Convert assets to a list of tuples
-        asset_tuples = [asset._to_tuple_instance() for asset in assets]
-        return asset_tuples
+        # asset_tuples = [asset._to_tuple_instance() for asset in assets]
+        return assets
 
     def fetch_all_assets(self):
         
         assets = self.session.query(self.Assets_Table).all()
         return assets
 
-    def create_OHLC_table(self):
+    def create_OHLC_tables(self):
         # Create OHLC Table
         self.OHLC_Table.create(self.engine, checkfirst=True)
         # create Temp Table
@@ -188,6 +190,8 @@ class OHLC_DB:
 
         # Create the temporary table in the database
         self.temp_ohlc_table.create(self.engine, checkfirst=True)
+
+    
 
 
     def insert_first_and_last_date_into_assets_table(self, asset_dict, first_date, last_date):
@@ -220,11 +224,18 @@ class OHLC_DB:
     def insert_into_temp_table(self, OHLC_Data_Set):
         self.session.query(self.temp_ohlc_table).delete()
         
+        # # Delete all rows from the temp table (in case it was populated earlier)
+        # delete_stmt = delete(self.temp_ohlc_table)
+        # self.session.execute(delete_stmt)   
+        # self.session.commit()
+        print(OHLC_Data_Set[0][6])
         # Perform the bulk INSERT operation
-        self.session.execute(
-            self.temp_assets_table.insert().values(OHLC_Data_Set)
-        )
+        for data_tuple in OHLC_Data_Set:
+            self.session.execute(
+                self.temp_ohlc_table.insert().values(data_tuple)
+            )
         self.session.commit()
+
 
 
     def insert_into_OHLC_table(self):
