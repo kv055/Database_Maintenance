@@ -140,8 +140,10 @@ class OHLC_DB:
         # establish connection to the Financiaal Data DB
         self.FinancialDataDb = FinancialData()
         self.session = self.FinancialDataDb.session
+        self.engine = self.FinancialDataDb.engine
         self.Assets_Table = self.FinancialDataDb.return_Assets_Table()
         self.OHLC_Table = self.FinancialDataDb.return_OHLC_Table()
+        l = 0
 
     def fetch_distinct_data_providers(self):
         
@@ -160,7 +162,9 @@ class OHLC_DB:
             .filter(self.Assets_Table.c.data_provider == dataprovider)
             .all()
         )
-        return assets
+        # Convert assets to a list of tuples
+        asset_tuples = [asset._to_tuple_instance() for asset in assets]
+        return asset_tuples
 
     def fetch_all_assets(self):
         
@@ -171,11 +175,19 @@ class OHLC_DB:
         # Create OHLC Table
         self.OHLC_Table.create(self.engine, checkfirst=True)
         # create Temp Table
-        create_temp_table_sql = """
-            CREATE TEMPORARY TABLE temporary_new_OHLC LIKE OHLC
-        """
-        with self.engine.connect() as connection:
-            connection.execute(create_temp_table_sql)
+
+        # Reflect the schema of self.OHLC_Table
+        self.metadata.reflect(bind=self.engine, schema='Financial_Data')
+        table_structure = self.OHLC_Table.metadata.tables[self.OHLC_Table.name]
+
+        # Specify the name for your temporary table
+        temp_table_name = 'Financial_Data'
+
+        # Create the temporary table using the reflected table structure
+        self.temp_ohlc_table = table_structure.tometadata(self.metadata, schema=temp_table_name)
+
+        # Create the temporary table in the database
+        self.temp_ohlc_table.create(self.engine, checkfirst=True)
 
 
     def insert_first_and_last_date_into_assets_table(self, asset_dict, first_date, last_date):
@@ -206,20 +218,12 @@ class OHLC_DB:
         self.session.commit()
 
     def insert_into_temp_table(self, OHLC_Data_Set):
-        self.session.query(self.OHLC_Table).delete()
-        for row in OHLC_Data_Set:
-            ohlc = self.OHLC(
-                Date=row[0],
-                Open=row[1],
-                High=row[2],
-                Low=row[3],
-                Close=row[4],
-                Average=row[5],
-                Ticker=row[6],
-                Data_Provider=row[7],
-                Time_Frame=row[8]
-            )
-            self.session.add(ohlc)
+        self.session.query(self.temp_ohlc_table).delete()
+        
+        # Perform the bulk INSERT operation
+        self.session.execute(
+            self.temp_assets_table.insert().values(OHLC_Data_Set)
+        )
         self.session.commit()
 
 
