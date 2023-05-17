@@ -1,5 +1,6 @@
 from Assets_table_updater.get_all_asset_urls_from_API import all_listed_assets
-from sqlalchemy import Column, Float, Table
+from sqlalchemy import Column, Float, Table, Integer
+# from sqlalchemy.schema import AddColumn
 from sqlalchemy.sql import delete, insert, select
 
 from ORM_Models.ORM_Models_Module import FinancialData
@@ -58,14 +59,15 @@ class update_asset_table:
         # Create the temporary table in the database
         temp_assets_table.create(self.engine, checkfirst=True)
 
-        # Insert new data into the temporary table
-        insert_stmt = insert(temp_assets_table).values(
-            data_provider='da',
-            ticker='er',
-            historical_data_url='youhiica_data_url',
-            live_data_url='y_r'
+        # Delete all rows from the temp table (in case it was populated earlier)
+        delete_stmt = delete(temp_assets_table)
+        self.session.execute(delete_stmt)   
+        self.session.commit()
+
+        # Perform the bulk INSERT operation
+        self.session.execute(
+            temp_assets_table.insert().values(self.data_set)
         )
-        self.session.execute(insert_stmt)
         self.session.commit()
 
            # Add newly listed assets to the main table
@@ -76,7 +78,7 @@ class update_asset_table:
                 select(temp_assets_table)
                 .join(self.Assets_Table, (temp_assets_table.c.data_provider == self.Assets_Table.c.data_provider) &
                     (temp_assets_table.c.ticker == self.Assets_Table.c.ticker), isouter=True)
-                .where(temp_assets_table.c.data_provider == 'your_data_provider')
+                .where(temp_assets_table.c.data_provider == self.data_provider)
                 .where(self.Assets_Table.c.ticker.is_(None))
             )
         )
@@ -86,7 +88,4 @@ class update_asset_table:
 
     
     def create_id_column(self):
-        # Create a new column in the OHLC table
-        new_column = Column('id', Float)
-        self.Assets_Table.add_column(new_column)
-        self.session.commit()
+        pass
