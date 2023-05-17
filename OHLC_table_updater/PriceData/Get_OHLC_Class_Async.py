@@ -62,8 +62,8 @@ class Import_OHLC_Data_Async:
             if provider['data_provider'] == 'Binance':
                 
                 async def fetch_Binance_url(asset_dict, index, session):
-                    
-                    async with session.get(f"""{asset_dict['historical_data_url']}1d""") as response:
+                    # asset_dict['historical_data_url']
+                    async with session.get(f"""{asset_dict[2]}1d""") as response:
                         # Timelock to not trigger the APIs rate limit of 1000 requests per minute
                         if index > 0 and 1000 / index == 1:
                             print('stopping requests for 2min to not trigger rate Limiter')
@@ -79,8 +79,10 @@ class Import_OHLC_Data_Async:
                             candle[0] = new_time_stamp
 
                         unformated_price_data = {
-                            'data_provider': asset_dict['data_provider'],
-                            'ticker': asset_dict['ticker'],
+                            # asset_dict['data_provider']
+                            'data_provider': asset_dict[0],
+                            # asset_dict['ticker'],
+                            'ticker': asset_dict[1],
                             # 'timeframe': asset_dict['timeframe']
                             'OHLC_unformated': json
                         }
@@ -99,15 +101,15 @@ class Import_OHLC_Data_Async:
             if provider['data_provider'] == 'Kraken':
                 
                 async def fetch_Kraken_url(asset_dict, index, session):
-                    async with session.get(f"""{asset_dict['historical_data_url']}1440""") as response:
+                    async with session.get(f"""{asset_dict[2]}1440""") as response:
                         answer = await response.text()
                         json = loads(answer)
                         
                         unformated_price_data = {
-                            'data_provider': asset_dict['data_provider'],
-                            'ticker': asset_dict['ticker'],
+                            'data_provider': asset_dict[0],
+                            'ticker': asset_dict[1],
                             # 'timeframe': asset_dict['timeframe']
-                            'OHLC_unformated': json['result'][asset_dict['ticker']]
+                            'OHLC_unformated': json['result'][asset_dict[1]]
                         }
                         self.all_OHLC_data.append(unformated_price_data)
                         
