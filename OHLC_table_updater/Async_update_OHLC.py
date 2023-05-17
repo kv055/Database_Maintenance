@@ -52,20 +52,24 @@ class update_OHLC_table:
         # Get PriceData
         for configuration in self.all_configs:
             Pricedata = Import_OHLC_Data_Async(configuration, self.all_asset_dicts)
+            # rewrite the code that these assets can be inserted without running a loop
             asset_dicts_with_ohlc = Pricedata.OHLC_Price_List_for_DB()
 
             async def insert(asset,index):
                 if len(asset['OHLC'])>0:
-                # Get First and last date of the dataset
-                    self.ohlc_tables.insert_first_and_last_date_into_assets_table(
-                        asset,
-                        asset['OHLC'][0][0],
-                        asset['OHLC'][-1][0]
-                    )
+                    print('Inserted',asset['data_provider'],asset['ticker'],index)
+                    
                     self.ohlc_tables.insert_into_temp_table(asset['OHLC'])
                     # Join on TimeStamp
                     self.ohlc_tables.insert_into_OHLC_table()
-                    print('Inserted',asset['data_provider'],asset['ticker'],index)
+                    
+                    
+                    # # Get First and last date of the dataset
+                    # self.ohlc_tables.insert_first_and_last_date_into_assets_table(
+                    #     asset,
+                    #     asset['OHLC'][0][0],
+                    #     asset['OHLC'][-1][0]
+                    # )
                 else:
                     # delete the asset from the assets Table
                     self.ohlc_tables.delete_row_by_data_provider_and_ticker(
