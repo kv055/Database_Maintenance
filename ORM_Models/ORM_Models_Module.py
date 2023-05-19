@@ -48,3 +48,56 @@ class FinancialData:
             Column('Time_Frame', String(45), primary_key=True)
         )
         return self.OHLC_table
+    
+    def return_temp_OHLC_Table(self):
+        self.temp_OHLC_Table = Table(
+            'temp_OHLC',
+            self.metadata,
+            Column('Date', DateTime),
+            Column('Open', Float, nullable=False),
+            Column('High', Float, nullable=False),
+            Column('Low', Float, nullable=False),
+            Column('Close', Float, nullable=False),
+            Column('Average', Float, nullable=False),
+            Column('Data_Provider', String(45), primary_key=True),
+            Column('Ticker', String(45), primary_key=True),
+            Column('Time_Frame', String(45), primary_key=True),
+            # Add the following line to make the table temporary
+            prefixes=['TEMPORARY']
+        )
+        return self.temp_OHLC_Table
+        
+
+    # def return_OHLC_Table(self):
+    #     self.OHLC_table = Table(
+    #         'OHLC',
+    #         self.metadata,
+    #         Column('Date', DateTime),
+    #         Column('Open', Float, nullable=False),
+    #         Column('High', Float, nullable=False),
+    #         Column('Low', Float, nullable=False),
+    #         Column('Close', Float, nullable=False),
+    #         Column('Average', Float, nullable=False),
+    #         Column('Data_Provider', String(45), primary_key=True),
+    #         Column('Ticker', String(45), primary_key=True),
+    #         Column('Time_Frame', String(45), primary_key=True)
+    #     )
+    #     return self.OHLC_table
+    
+    # def return_temp_OHLC_Table(self):
+    #     self.temp_OHLC_Table = Table(
+    #         'temp_OHLC',
+    #         self.metadata,
+    #         Column('Date', DateTime),
+    #         Column('Open', Float, nullable=False),
+    #         Column('High', Float, nullable=False),
+    #         Column('Low', Float, nullable=False),
+    #         Column('Close', Float, nullable=False),
+    #         Column('Average', Float, nullable=False),
+    #         Column('Data_Provider', String(45), primary_key=True),
+    #         Column('Ticker', String(45), primary_key=True),
+    #         Column('Time_Frame', String(45), primary_key=True),
+    #         # Add the following line to make the table temporary
+    #         prefixes=['TEMPORARY']
+    #     )
+    #     return self.temp_OHLC_Table
