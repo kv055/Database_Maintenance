@@ -130,7 +130,7 @@
 
 
 
-from sqlalchemy.sql import delete, insert, update, select, null, distinct
+from sqlalchemy.sql import delete, insert, update, select, null, distinct,text
 
 from ORM_Models.ORM_Models_Module import FinancialData
 
@@ -144,6 +144,7 @@ class OHLC_DB:
         self.metadata = self.FinancialDataDb.metadata
         self.Assets_Table = self.FinancialDataDb.return_Assets_Table()
         self.OHLC_Table = self.FinancialDataDb.return_OHLC_Table()
+        self.temp_OHLC_Table = self.FinancialDataDb .return_temp_OHLC_Table()
         self.create_OHLC_tables()
 
 
@@ -177,22 +178,7 @@ class OHLC_DB:
         # Create OHLC Table
         self.OHLC_Table.create(self.engine, checkfirst=True)
         # create Temp Table
-
-        # Reflect the schema of self.OHLC_Table
-        self.metadata.reflect(bind=self.engine, schema='Financial_Data')
-        table_structure = self.OHLC_Table.metadata.tables[self.OHLC_Table.name]
-
-        # Specify the name for your temporary table
-        temp_table_name = 'Financial_Data'
-
-        # Create the temporary table using the reflected table structure
-        self.temp_ohlc_table = table_structure.tometadata(self.metadata, schema=temp_table_name)
-
-        # Create the temporary table in the database
-        self.temp_ohlc_table.create(self.engine, checkfirst=True)
-
-    
-
+        self.temp_OHLC_Table.create(self.engine, checkfirst=True)
 
     def insert_first_and_last_date_into_assets_table(self, asset_dict, first_date, last_date):
         
@@ -222,18 +208,9 @@ class OHLC_DB:
         self.session.commit()
 
     def insert_into_temp_table(self, OHLC_Data_Set):
-        self.session.query(self.temp_ohlc_table).delete()
         
-        # # Delete all rows from the temp table (in case it was populated earlier)
-        # delete_stmt = delete(self.temp_ohlc_table)
-        # self.session.execute(delete_stmt)   
-        # self.session.commit()
-        print(OHLC_Data_Set[0][6])
-        # Perform the bulk INSERT operation
-        for data_tuple in OHLC_Data_Set:
-            self.session.execute(
-                self.temp_ohlc_table.insert().values(data_tuple)
-            )
+        # Perform the bulk INSERT operation using executemany()
+        self.session.execute(self.temp_OHLC_Table.insert().values(OHLC_Data_Set))
         self.session.commit()
 
 
@@ -242,13 +219,13 @@ class OHLC_DB:
         # Define the select statement for the left join
         select_stmt = (
             select(self.OHLC_Table)
-            .select_from(self.OHLC_Table)
+            .select_from(self.temp_OHLC_Table)
             .join(
                 self.OHLC_Table,
                 onclause=(
-                    self.OHLC_Table.Date == self.OHLC_Table.Date,
-                    self.OHLC_Table.Data_Provider == self.OHLC_Table.Data_Provider,
-                    self.OHLC_Table.Ticker == self.OHLC_Table.Ticker
+                    self.temp_OHLC_Table.Date == self.OHLC_Table.Date,
+                    self.temp_OHLC_Table.Data_Provider == self.OHLC_Table.Data_Provider,
+                    self.temp_OHLC_Table.Ticker == self.OHLC_Table.Ticker
                 ),
                 isouter=True
             )
@@ -264,3 +241,28 @@ class OHLC_DB:
         # Execute the insert statement
         self.session.execute(insert_stmt)
         self.session.commit()
+
+
+#         # Compare entries with left/right joins
+#         # count_sql = f"""
+#         #     select * from temporary_new_OHLC
+#         #     left join OHLC 
+#         #         ON temporary_new_self.OHLC_Table.Date = self.OHLC_Table.Date
+#         #         AND temporary_new_self.OHLC_Table.Data_Provider = self.OHLC_Table.Data_Provider
+#         #         AND temporary_new_self.OHLC_Table.Ticker = self.OHLC_Table.Ticker
+#         #     where self.OHLC_Table.Date is null
+#         # """
+#         # self.db_connection.cursor.execute(count_sql)
+#         # new_rows = self.db_connection.cursor.fetchall()
+
+#         join_sql = f"""
+#             insert into OHLC
+#                 select temporary_new_self.OHLC_Table.* from temporary_new_OHLC
+#                     left join OHLC 
+#                         on temporary_new_self.OHLC_Table.Date = self.OHLC_Table.Date
+#                         AND temporary_new_self.OHLC_Table.Data_Provider = self.OHLC_Table.Data_Provider
+#                         AND temporary_new_self.OHLC_Table.Ticker = self.OHLC_Table.Ticker
+#                     where self.OHLC_Table.Date is null
+#         """
+#         self.db_connection.cursor.execute(join_sql)
+#         self.db_connection.connection.commit()
