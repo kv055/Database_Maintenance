@@ -217,52 +217,23 @@ class OHLC_DB:
 
     def insert_into_OHLC_table(self):
         # Define the select statement for the left join
-        select_stmt = (
-            select(self.OHLC_Table)
-            .select_from(self.temp_OHLC_Table)
-            .join(
+        select_stmt = select(self.temp_OHLC_Table).select_from(
+            self.temp_OHLC_Table.outerjoin(
                 self.OHLC_Table,
                 onclause=(
-                    self.temp_OHLC_Table.Date == self.OHLC_Table.Date,
-                    self.temp_OHLC_Table.Data_Provider == self.OHLC_Table.Data_Provider,
-                    self.temp_OHLC_Table.Ticker == self.OHLC_Table.Ticker
-                ),
-                isouter=True
+                    (self.temp_OHLC_Table.c.Date == self.OHLC_Table.c.Date) &
+                    (self.temp_OHLC_Table.c.Data_Provider == self.OHLC_Table.c.Data_Provider) &
+                    (self.temp_OHLC_Table.c.Ticker == self.OHLC_Table.c.Ticker)
+                )
             )
-            .where(self.OHLC_Table.Date.is_(None))
-        )
+        ).where(self.OHLC_Table.c.Date.is_(None))
 
         # Define the insert statement to insert rows into the OHLC table
-        insert_stmt = insert(self.OHLC_Table).from_select(
+        insert_stmt = self.OHLC_Table.insert().from_select(
             self.OHLC_Table.columns.keys(),
             select_stmt
-        ).where(self.OHLC_Table.Date == null())
+        )
 
         # Execute the insert statement
         self.session.execute(insert_stmt)
         self.session.commit()
-
-
-#         # Compare entries with left/right joins
-#         # count_sql = f"""
-#         #     select * from temporary_new_OHLC
-#         #     left join OHLC 
-#         #         ON temporary_new_self.OHLC_Table.Date = self.OHLC_Table.Date
-#         #         AND temporary_new_self.OHLC_Table.Data_Provider = self.OHLC_Table.Data_Provider
-#         #         AND temporary_new_self.OHLC_Table.Ticker = self.OHLC_Table.Ticker
-#         #     where self.OHLC_Table.Date is null
-#         # """
-#         # self.db_connection.cursor.execute(count_sql)
-#         # new_rows = self.db_connection.cursor.fetchall()
-
-#         join_sql = f"""
-#             insert into OHLC
-#                 select temporary_new_self.OHLC_Table.* from temporary_new_OHLC
-#                     left join OHLC 
-#                         on temporary_new_self.OHLC_Table.Date = self.OHLC_Table.Date
-#                         AND temporary_new_self.OHLC_Table.Data_Provider = self.OHLC_Table.Data_Provider
-#                         AND temporary_new_self.OHLC_Table.Ticker = self.OHLC_Table.Ticker
-#                     where self.OHLC_Table.Date is null
-#         """
-#         self.db_connection.cursor.execute(join_sql)
-#         self.db_connection.connection.commit()
