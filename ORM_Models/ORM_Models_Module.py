@@ -24,28 +24,47 @@ class FinancialData:
             Column('data_provider', String(255), primary_key=True),
             Column('ticker', String(45), primary_key=True),
             Column('historical_data_url', String(255)),
-            Column('historical_data_req_body', String(255)),
             Column('live_data_url', String(255)),
+            Column('historical_data_req_body', String(255)),
             Column('live_data_req_body', String(255)),
             Column('first_available_datapoint', DateTime, nullable=False),
             Column('last_available_datapoint', DateTime, nullable=False),
             extend_existing=True  # Add this line to extend the existing table
         )
         return self.assets_table
+    
+    def return_temp_Assets_Table(self):
+        self.temp_assets_table = Table(
+            'temp_Assets',
+            self.metadata,
+            Column('data_provider', String(255), primary_key=True),
+            Column('ticker', String(45), primary_key=True),
+            Column('historical_data_url', String(255)),
+            Column('live_data_url', String(255)),
+            Column('historical_data_req_body', String(255)),
+            Column('live_data_req_body', String(255)),
+            Column('first_available_datapoint', DateTime, nullable=False),
+            Column('last_available_datapoint', DateTime, nullable=False),
+            extend_existing=True , # Add this line to extend the existing table
+            # Add the following line to make the table temporary
+            prefixes=['TEMPORARY']
+        )
+        return self.temp_assets_table
 
     def return_OHLC_Table(self):
         self.OHLC_table = Table(
             'OHLC',
             self.metadata,
-            Column('Date', DateTime, primary_key=True),
+            #  Column('Date', Integer,primary_key=True),
+            Column('Date', DateTime,primary_key=True),
             Column('Open', Float, nullable=False),
             Column('High', Float, nullable=False),
             Column('Low', Float, nullable=False),
             Column('Close', Float, nullable=False),
             Column('Average', Float, nullable=False),
-            Column('Data_Provider', String(45), primary_key=True),
-            Column('Ticker', String(45), primary_key=True),
-            Column('Time_Frame', String(45), primary_key=True)
+            Column('Ticker', String(45),primary_key=True),
+            Column('Data_Provider', String(45),primary_key=True),
+            Column('Time_Frame', String(45))
         )
         return self.OHLC_table
     
@@ -53,15 +72,16 @@ class FinancialData:
         self.temp_OHLC_Table = Table(
             'temp_OHLC',
             self.metadata,
-            Column('Date', DateTime),
+            # Column('Date', Integer,primary_key=True),
+            Column('Date', DateTime,primary_key=True),
             Column('Open', Float, nullable=False),
             Column('High', Float, nullable=False),
             Column('Low', Float, nullable=False),
             Column('Close', Float, nullable=False),
             Column('Average', Float, nullable=False),
-            Column('Data_Provider', String(45), primary_key=True),
-            Column('Ticker', String(45), primary_key=True),
-            Column('Time_Frame', String(45), primary_key=True),
+            Column('Ticker', String(45),primary_key=True), 
+            Column('Data_Provider', String(45),primary_key=True),
+            Column('Time_Frame', String(45)),
             # Add the following line to make the table temporary
             prefixes=['TEMPORARY']
         )
