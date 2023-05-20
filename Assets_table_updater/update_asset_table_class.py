@@ -16,16 +16,20 @@ class update_asset_table:
         # establish connection to the Financiaal Data DB
         self.FinancialDataDb = FinancialData()
         self.Assets_Table = self.FinancialDataDb.return_Assets_Table()
+        self.temp_Assets_Table = self.FinancialDataDb.return_temp_Assets_Table()
         self.session = self.FinancialDataDb.session
         self.engine = self.FinancialDataDb.engine
         self.metadata = self.FinancialDataDb.metadata
+        
         # Create Assets Table if it doesnts exist
         self.Assets_Table.create(checkfirst=True,bind=self.engine)
+        # Create the temporary table in the database
+        self.temp_Assets_Table.create(self.engine, checkfirst=True)
 
-        # Check if id column exists and drop it
-        if 'id' in self.Assets_Table.columns:
-            self.Assets_Table.c.id.drop()
-            self.Assets_Table.indexes.remove(self.Assets_Table.c.id_UNIQUE)
+        # # Check if id column exists and drop it
+        # if 'id' in self.Assets_Table.columns:
+        #     self.Assets_Table.c.id.drop()
+        #     self.Assets_Table.indexes.remove(self.Assets_Table.c.id_UNIQUE)
 
         assets_api_instance = all_listed_assets()
         self.Alpaca_URL_List = assets_api_instance.all_links_Alpaca
@@ -45,45 +49,36 @@ class update_asset_table:
         self.data_provider = 'Kraken'
 
     def enter_into_db(self):
-
-        # Reflect the schema of self.Assets_Table
-        self.metadata.reflect(bind=self.engine, schema='Financial_Data')
-        table_structure = self.Assets_Table.metadata.tables[self.Assets_Table.name]
-
-        # Specify the name for your temporary table
-        temp_table_name = 'Financial_Data'
-
-        # Create the temporary table using the reflected table structure
-        temp_assets_table = table_structure.tometadata(self.metadata, schema=temp_table_name)
-
-        # Create the temporary table in the database
-        temp_assets_table.create(self.engine, checkfirst=True)
-
         # Delete all rows from the temp table (in case it was populated earlier)
-        delete_stmt = delete(temp_assets_table)
+        delete_stmt = delete(self.temp_Assets_Table)
         self.session.execute(delete_stmt)   
         self.session.commit()
 
-        # Perform the bulk INSERT operation
+        # Perform the bulk INSERT operation into temp Table
         self.session.execute(
-            temp_assets_table.insert().values(self.data_set)
+            self.temp_Assets_Table.insert().values(self.data_set)
         )
         self.session.commit()
 
-           # Add newly listed assets to the main table
-        add_newly_listed_assets_stmt = (
-            insert(self.Assets_Table)
-            .from_select(
-                self.Assets_Table.columns.keys(),
-                select(temp_assets_table)
-                .join(self.Assets_Table, (temp_assets_table.c.data_provider == self.Assets_Table.c.data_provider) &
-                    (temp_assets_table.c.ticker == self.Assets_Table.c.ticker), isouter=True)
-                .where(temp_assets_table.c.data_provider == self.data_provider)
-                .where(self.Assets_Table.c.ticker.is_(None))
-            )
+        self.session.execute(
+            self.Assets_Table.insert().values(self.data_set)
         )
-        self.session.execute(add_newly_listed_assets_stmt)
         self.session.commit()
+
+        # # Add newly listed assets to the main table
+        # add_newly_listed_assets_stmt = (
+        #     insert(self.Assets_Table)
+        #     .from_select(
+        #         self.Assets_Table.columns.keys(),
+        #         select(self.temp_Assets_Table)
+        #         .join(self.Assets_Table, (self.temp_Assets_Table.c.data_provider == self.Assets_Table.c.data_provider) &
+        #             (self.temp_Assets_Table.c.ticker == self.Assets_Table.c.ticker))
+        #         .where(self.temp_Assets_Table.c.data_provider == self.data_provider)
+        #         .where(self.Assets_Table.c.ticker.is_(None))
+        #     )
+        # )
+        # self.session.execute(add_newly_listed_assets_stmt)
+        # self.session.commit()
         print(f'Inserted all assets from {self.data_provider}')
 
     
