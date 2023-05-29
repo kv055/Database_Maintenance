@@ -65,20 +65,20 @@ class update_asset_table:
         )
         self.session.commit()
 
-        # # Add newly listed assets to the main table
-        # add_newly_listed_assets_stmt = (
-        #     insert(self.Assets_Table)
-        #     .from_select(
-        #         self.Assets_Table.columns.keys(),
-        #         select(self.temp_Assets_Table)
-        #         .join(self.Assets_Table, (self.temp_Assets_Table.c.data_provider == self.Assets_Table.c.data_provider) &
-        #             (self.temp_Assets_Table.c.ticker == self.Assets_Table.c.ticker))
-        #         .where(self.temp_Assets_Table.c.data_provider == self.data_provider)
-        #         .where(self.Assets_Table.c.ticker.is_(None))
-        #     )
-        # )
-        # self.session.execute(add_newly_listed_assets_stmt)
-        # self.session.commit()
+        # Add newly listed assets to the main table
+        add_newly_listed_assets_stmt = (
+            insert(self.Assets_Table)
+            .from_select(
+                self.Assets_Table.columns.keys(),
+                select(self.temp_Assets_Table)
+                .join(self.Assets_Table, (self.temp_Assets_Table.c.data_provider == self.Assets_Table.c.data_provider) &
+                    (self.temp_Assets_Table.c.ticker == self.Assets_Table.c.ticker))
+                .where(self.temp_Assets_Table.c.data_provider == self.data_provider)
+                .where(self.Assets_Table.c.ticker.is_(None))
+            )
+        )
+        self.session.execute(add_newly_listed_assets_stmt)
+        self.session.commit()
         print(f'Inserted all assets from {self.data_provider}')
 
     
