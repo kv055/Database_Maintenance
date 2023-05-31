@@ -31,43 +31,32 @@ class update_asset_table:
         self.db_connection.cursor.execute(create_assets_table_sql)
         self.db_connection.connection.commit()
 
-        # LOGIC ERROR TO BE FIXED, BUT WORKS FOR NOW AS LONG AS THE assets TABLE
-        # DOESNT GET DELETED
-        # if create_assets_table_sql gets executed then there will be an error
-        # thrown once the delete_id_column_sql gets executed
-        # beacause the nonexistend id Column
-
         # Delete id column if table exists
         delete_id_column_sql = f"""
-            ALTER TABLE {self.db_name}.`Assets` 
-            DROP COLUMN `id`,
-            DROP INDEX `id_UNIQUE` ;
-            ;
-        """
-        self.db_connection.cursor.execute(delete_id_column_sql)
-        self.db_connection.connection.commit()
-        
-        # this statement would fix the above mentioned error but i
-        # cant figure out the correct syntax
+            SET @column_to_drop = 'id';
+            SET @index_to_drop = 'id_UNIQUE';
 
-        # create_table_or_delete_id_column_sql_sql = f"""
-        #     IF NOT EXISTS(
-        #     CREATE TABLE `assets` (
-        #         `data_provider` varchar(255) NOT NULL,
-        #         `ticker` varchar(45) NOT NULL,
-        #         `historical_data_url` varchar(255) DEFAULT NULL,
-        #         `historical_data_req_body` varchar(255) DEFAULT NULL,
-        #         `live_data_url` varchar(255) DEFAULT NULL,
-        #         `live_data_req_body` varchar(255) DEFAULT NULL,
-        #         PRIMARY KEY (`data_provider`, `ticker`)
-        #     ) ELSE
-        #     ALTER TABLE `DummyData`.`assets` 
-        #         DROP COLUMN `id`,
-        #         DROP INDEX `id_UNIQUE`;
-        #     END IF;
-        # """
-        # self.db_connection.cursor.execute(create_table_or_delete_id_column_sql_sql)
-        # self.db_connection.connection.commit()
+            IF EXISTS (
+                SELECT COLUMN_NAME
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_SCHEMA = '{self.db_name}' AND TABLE_NAME = 'Assets' AND COLUMN_NAME = @column_to_drop
+            ) THEN
+                ALTER TABLE {self.db_name}.`Assets`
+                DROP COLUMN `id`;
+            END IF;
+
+            IF EXISTS (
+                SELECT INDEX_NAME
+                FROM INFORMATION_SCHEMA.STATISTICS
+                WHERE TABLE_SCHEMA = '{self.db_name}' AND TABLE_NAME = 'Assets' AND INDEX_NAME = @index_to_drop
+            ) THEN
+                ALTER TABLE {self.db_name}.`Assets`
+                DROP INDEX `id_UNIQUE`;
+            END IF;
+        """
+
+        self.db_connection.cursor.execute(delete_id_column_sql, multi=True)
+        self.db_connection.connection.commit()
 
         assets_api_instance = all_listed_assets()
         self.Alpaca_URL_List = assets_api_instance.all_links_Alpaca
