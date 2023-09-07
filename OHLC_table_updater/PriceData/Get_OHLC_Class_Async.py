@@ -26,8 +26,8 @@ class Import_OHLC_Data_Async:
             if provider['data_provider'] == 'Alpaca':
 
                 async def fetch_Alpaca_asset(asset_dict, index):
-                    print(f"""{asset_dict['ticker'],index}Test""")
-                    ohlc_in_alpaca_raw_format = await self.Alpaca_API.get_OHLC(asset_dict['ticker'],'1Day')
+                    print(f"""{asset_dict[1],index}Test""")
+                    ohlc_in_alpaca_raw_format = await self.Alpaca_API.get_OHLC(asset_dict[1],'1Day')
                     unformated_dataset = []
                     for Bar_dict in ohlc_in_alpaca_raw_format:
                         date_as_string = Bar_dict['t'].replace('Z','')
@@ -43,7 +43,7 @@ class Import_OHLC_Data_Async:
                     
                     unformated_price_data = {
                         'data_provider': asset_dict['data_provider'],
-                        'ticker': asset_dict['ticker'],
+                        'ticker': asset_dict[1],
                         # 'timeframe': asset_dict['timeframe']
                         'OHLC_unformated': unformated_dataset
                     }
@@ -79,7 +79,7 @@ class Import_OHLC_Data_Async:
 
                         unformated_price_data = {
                             'data_provider': asset_dict['data_provider'],
-                            'ticker': asset_dict['ticker'],
+                            'ticker': asset_dict[1],
                             # 'timeframe': asset_dict['timeframe']
                             'OHLC_unformated': json
                         }
@@ -98,19 +98,19 @@ class Import_OHLC_Data_Async:
             if provider['data_provider'] == 'Kraken':
                 
                 async def fetch_Kraken_url(asset_dict, index, session):
-                    async with session.get(f"""{asset_dict['historical_data_url']}1440""") as response:
+                    async with session.get(f"""{asset_dict[2]}1440""") as response:
                         answer = await response.text()
                         json = loads(answer)
                         
                         unformated_price_data = {
-                            'data_provider': asset_dict['data_provider'],
-                            'ticker': asset_dict['ticker'],
+                            'data_provider': asset_dict[0],
+                            'ticker': asset_dict[1],
                             # 'timeframe': asset_dict['timeframe']
-                            'OHLC_unformated': json['result'][asset_dict['ticker']]
+                            'OHLC_unformated': json['result'][asset_dict[1]]
                         }
                         self.all_OHLC_data.append(unformated_price_data)
                         
-                        print('fetch Kraken',index)
+                        # print('fetch Kraken',index)
                         return unformated_price_data
                 
                 async def main():
